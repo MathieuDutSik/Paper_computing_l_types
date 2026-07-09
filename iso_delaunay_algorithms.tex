@@ -1,0 +1,444 @@
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm2e}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!45!black,
+  citecolor=blue!45!black,
+  urlcolor=blue!45!black
+}
+
+\newtheorem{definition}{Definition}
+\newtheorem{remark}{Remark}
+\numberwithin{equation}{section}
+
+\newcommand{\Sym}{\operatorname{Sym}}
+\newcommand{\GL}{\operatorname{GL}}
+\newcommand{\rank}{\operatorname{rank}}
+\newcommand{\Del}{\operatorname{Del}}
+\newcommand{\cone}{\operatorname{cone}}
+\newcommand{\linspan}{\operatorname{span}}
+\newcommand{\ZZ}{\mathbb{Z}}
+\newcommand{\RR}{\mathbb{R}}
+
+\title{Algorithms for Computing Iso-Delaunay Domains}
+\author{Mathieu Dutour Sikiri{\'c}}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This note records an algorithm for enumerating iso-Delaunay domains, also
+called \(T\)-secondary cones or \(L\)-type domains in a prescribed linear space
+\(T\) of quadratic forms.  The first section gives the enumeration algorithm.
+The second section explains a randomized search for an iso-Delaunay domain
+whose extreme rays all define full-rank Gram matrices.
+\end{abstract}
+
+\section{Enumeration of iso-Delaunay domains}
+
+\subsection{The input space}
+
+Let \(T \subset \Sym_n(\RR)\) be the rational linear space of symmetric
+matrices under consideration.  We use its saturated integral matrix lattice
+\begin{equation}
+  T_{\ZZ}=T\cap\Sym_n(\ZZ)
+\end{equation}
+and assume that it spans \(T\) over \(\RR\).  Fix a \(\ZZ\)-basis
+\(B_1,\ldots,B_m\) of \(T_{\ZZ}\), and write
+\(\ell_u(x)=x^{t}B_u x\).  Thus the integral coordinate vectors are exactly
+the integral matrices in \(T\).  A point
+\(q=(q_1,\ldots,q_m)\in\RR^m\) represents the Gram matrix
+\begin{equation}
+  Q(q)=\sum_{u=1}^{m} q_u B_u .
+\end{equation}
+The enumeration is performed inside the positive definite part of \(T\).  A
+domain is represented by a Delaunay tessellation \(\Del(Q)\), an interior Gram
+matrix \(Q\), and an invariant short-vector family used for equivalence tests.
+
+\begin{definition}
+An iso-Delaunay domain in \(T\) is the relatively open cone of all
+positive-definite forms \(Q\in T\) that have a fixed Delaunay tessellation.
+Its closure is a rational polyhedral cone in \(T\).
+\end{definition}
+
+In particular, if \(U\in\GL_n(\ZZ)\) preserves \(T\), then
+\(Q\mapsto U^tQU\) preserves \(T_{\ZZ}\).  Its induced matrix in the above
+\(T\)-coordinates therefore belongs to \(\GL_m(\ZZ)\).  This integral
+coordinate structure is also used in the enumeration of \(T\)-perfect forms
+\cite{Schuermann2009}.
+
+The algorithm follows the \(T\)-secondary-cone theory of
+\cite{DutourSikiriSchurmannVallentin2008}, itself a generalization of
+Voronoi's reduction theory \cite{Voronoi1908}.  The finite object that is
+enumerated is not the full infinite tessellation of \(\RR^n\), but a list of
+orbits of Delaunay polytopes together with facet adjacencies and stabilizer
+groups.
+
+\subsection{Linear inequalities from one Delaunay wall}
+
+The fundamental local computation is the construction of the wall inequality
+associated with a Delaunay polytope \(P\) and a neighbouring Delaunay polytope
+\(P'\).  Let \(v_1,\ldots,v_s\in\ZZ^n\) be the vertices of \(P\), and choose
+an affine basis \(v_{i_0},\ldots,v_{i_n}\) of \(P\).  For a test vertex \(w\),
+write \(w\) as an affine combination of this basis, that is,
+\begin{equation}
+  \sum_{k=0}^{n}\lambda_k = 1,\qquad
+  w = \sum_{k=0}^{n}\lambda_k v_{i_k}.
+\end{equation}
+Then the Delaunay condition that \(w\) is outside or on the circumsphere of
+the basis is the linear condition
+\begin{equation}
+  \sum_{u=1}^{m} q_u
+  \left(
+    \ell_u(w) - \sum_{k=0}^{n}\lambda_k \ell_u(v_{i_k})
+  \right) \geq 0 .
+\end{equation}
+For an actual facet adjacency \(P,P'\), any vertex of \(P'\setminus P\) gives
+the same inequality up to a scalar factor.  The scalar is canonicalized, and
+all Delaunay-adjacency records producing that same wall are grouped together.
+
+For a Delaunay tessellation \(D\), one loops over all orbits of Delaunay
+polytopes and over all their facet adjacencies.  This gives
+\begin{equation}
+  a_1(q)\geq 0,\ldots,a_N(q)\geq 0,
+\end{equation}
+the full half-space description of the closure of the iso-Delaunay domain.
+Redundant inequalities are then removed, leaving the irredundant wall
+description used for adjacency.  This redundancy removal is carried out by
+Clarkson's output-sensitive redundancy algorithm \cite{Clarkson1994}, using
+the implementation available in cddlib \cite{FukudaCddlib}.
+
+\begin{algorithm}\label{Algo_WallInequalities}
+\KwData{A Delaunay tessellation \(D\) represented by orbit representatives of
+Delaunay polytopes and their facet adjacencies; a basis
+\(B_1,\ldots,B_m\) of \(T\)}
+\KwResult{The irredundant wall inequalities of the iso-Delaunay cone of \(D\)}
+${\mathcal A}\leftarrow \emptyset$.\\
+\For{each orbit representative \(P\) of a Delaunay polytope of \(D\)}{
+  choose an affine basis \(v_{i_0},\ldots,v_{i_n}\) of \(P\).\\
+  \For{each facet-neighbour \(P'\) of \(P\)}{
+    choose a vertex \(w\in P'\setminus P\).\\
+    compute \(\lambda_0,\ldots,\lambda_n\) from (1.2).\\
+    \(a(q)\leftarrow\) the linear form occurring in (1.3).\\
+    replace \(a\) by its canonical scalar multiple.\\
+    append to \(a\) the adjacency record \((P,P')\).\\
+    ${\mathcal A}\leftarrow {\mathcal A}\cup\{a\}$, merging equal canonical
+    inequalities and their adjacency records.\\
+  }
+}
+remove redundant inequalities from \({\mathcal A}\) by Clarkson's algorithm.\\
+\KwRet{\({\mathcal A}\)}
+\caption{Wall inequalities of an iso-Delaunay cone}
+\end{algorithm}
+
+\subsection{Interior form of a domain}
+
+Let
+\begin{equation}
+  C=\{q\in\RR^m : a_i(q)\geq 0,\ 1\leq i\leq N\}
+\end{equation}
+be the closure of an iso-Delaunay cone, assumed full-dimensional in its
+ambient \(T\)-space.  The enumeration needs a representative point in the
+relative interior of \(C\).  A generic linear program would find such a point,
+but the result would depend on accidental choices in the linear program.  The
+algorithm instead constructs a point that is canonical with respect to
+permuting the inequalities and equivariant under linear changes of coordinates
+in \(T\).
+
+The first step fixes the scale of the cone by working on the affine section
+\begin{equation}
+  S=\{q\in\RR^m : a_i(q)\geq 1 \text{ for all } i\}.
+\end{equation}
+On this section minimize the symmetric objective
+\begin{equation}
+  \sum_{i=1}^{N} (a_i(q)-1),
+\end{equation}
+or, what is the same, minimize \(\sum_i a_i(q)\).  This objective is the sum of
+all inequalities, so it is independent of their order.  If the optimum is a
+single point, that point is returned.  It lies in the interior of \(C\), since
+all inequalities in the scaled section are strict or equal to \(1>0\).
+
+If the optimum is not a single point, the linear program has selected a
+positive-dimensional optimal face
+\begin{equation}
+  F=\left\{q\in S : \sum_i(a_i(q)-1)=\mu\right\},
+\end{equation}
+where \(\mu\) is the optimal value.  One then works in the direction space
+\begin{equation}
+  L_F=\linspan\{q-q' : q,q'\in F\}.
+\end{equation}
+The inequalities that still cut the face nontrivially are projected to
+coordinates on \(L_F\), and the same construction is applied recursively in
+that lower-dimensional space.
+
+The recursion strictly lowers the dimension whenever the first minimization is
+degenerate.  At the last step either the symmetric linear program has a unique
+solution or the remaining optimal face has no further nontrivial direction.
+Pulling the recursive solution back through the successive affine projections
+gives the final point \(q\in C\).
+
+This construction uses only linear programming and linear algebra; no full
+dual-description computation is needed.  It is geometrically canonical in the
+following sense.  Permuting the inequalities does not change the point, and a
+linear change of coordinates in \(T\) sends the selected point by the
+contragredient transformation.  Rescaling the inequalities individually is not
+an invariance of the construction, so a canonical normalization of the wall
+inequalities is part of the preceding step.
+
+\begin{algorithm}\label{Algo_GeomInterior}
+\KwData{A full-dimensional cone \(C=\{q:a_i(q)\geq 0\}\), with the
+inequalities \(a_i\) canonically scaled}
+\KwResult{A geometrically canonical point in the relative interior of \(C\)}
+\If{\(\dim C=0\)}{
+  \KwRet{the unique point of \(C\)}
+}
+\(S\leftarrow \{q:a_i(q)\geq 1\mbox{ for all }i\}\).\\
+Solve the linear program minimizing \(\sum_i(a_i(q)-1)\) on \(S\).\\
+\(F\leftarrow\) the optimal face of this linear program.\\
+\If{\(F\) is a single point \(q\)}{
+  \KwRet{\(q\)}
+}
+\(L_F\leftarrow\linspan\{q-q':q,q'\in F\}\).\\
+Choose an affine parametrization \(q=p+Uy\) of \(F\), with columns of \(U\)
+spanning \(L_F\).\\
+Project to the \(y\)-coordinates the inequalities that are not identically
+constant on \(p+L_F\).\\
+\(y_0\leftarrow\) result of Algorithm~\ref{Algo_GeomInterior} for the projected
+system.\\
+\KwRet{\(p+Uy_0\)}
+\caption{Geometrically unique interior point}
+\end{algorithm}
+
+The initial domain is obtained by sampling a random positive definite matrix in
+\(T\), rejecting it if it has extra symmetry or if some Delaunay polytope
+already imposes an equality in \(T\).  Once a generic tessellation is accepted,
+its defining cone is computed and an interior Gram matrix is attached to it.
+
+\subsection{Adjacent domains and flips}
+
+The adjacency graph of iso-Delaunay domains is obtained by crossing
+irreducible walls of the current cone.  For each orbit representative of an
+irredundant inequality, the algorithm first computes a point in the relative
+interior of the corresponding facet.  If this point does not represent a
+positive-definite matrix, the wall belongs to the boundary of the positive
+definite cone and no adjacent iso-Delaunay domain is produced.  Otherwise the
+wall is crossed by a \(T\)-flip.
+
+The flip uses the adjacency records stored with the wall inequality to identify
+all Delaunay polytopes that meet at the wall.  These polytopes form
+repartitioning polytopes.  The repartitioning construction lifts vertices by
+the height \(x^tQx\) for an interior form \(Q\) of the old domain.  Its facets
+split into three classes:
+\begin{itemize}[leftmargin=2em]
+  \item lower facets, which are the old Delaunay polytopes;
+  \item higher facets, which become the new Delaunay polytopes after crossing
+        the wall;
+  \item barrel facets, which transmit adjacencies between neighbouring
+        repartitioning polytopes.
+\end{itemize}
+After the higher facets have been identified modulo the local symmetry group,
+one reconstructs the whole finite orbit description of the new Delaunay
+tessellation and recomputes its facet adjacencies.
+
+\begin{algorithm}\label{Algo_AdjacentIsoDelaunay}
+\KwData{An iso-Delaunay domain \(C\), represented by its Delaunay tessellation
+\(D\), an interior form \(Q\), and the wall inequalities of \(C\)}
+\KwResult{The list of positive-definite iso-Delaunay domains adjacent to \(C\)}
+\({\mathcal N}\leftarrow\emptyset\).\\
+Compute the stabilizer of \(C\) in the arithmetic group preserving \(T\).\\
+Compute orbit representatives of the irredundant walls of \(C\).\\
+\For{each wall representative \(F\)}{
+  compute a point \(q_F\) in the relative interior of \(F\).\\
+  \If{\(Q(q_F)\) is not positive definite}{
+    continue to the next wall.
+  }
+  collect all Delaunay adjacencies producing the wall \(F\).\\
+  construct the associated repartitioning polytopes.\\
+  replace lower facets by higher facets, keeping barrel facets for adjacency
+  matching.\\
+  reconstruct the finite orbit description of the flipped Delaunay
+  tessellation \(D'\).\\
+  compute an interior form \(Q'\) of the cone of \(D'\) by
+  Algorithm~\ref{Algo_GeomInterior}.\\
+  \({\mathcal N}\leftarrow{\mathcal N}\cup\{(D',Q')\}\).
+}
+\KwRet{\({\mathcal N}\)}
+\caption{Adjacent iso-Delaunay domains}
+\end{algorithm}
+
+\subsection{Equivalence and graph traversal}
+
+Enumeration is a graph traversal in which each visited vertex is an
+iso-Delaunay domain and each edge is a positive-definite wall crossing.  The
+data required by this traversal are:
+\begin{itemize}[leftmargin=2em]
+  \item construction of one initial iso-Delaunay domain;
+  \item computation of all adjacent domains by the wall-and-flip procedure
+        above;
+  \item computation of a fast invariant, for instance from an invariant
+        short-vector family of the interior Gram matrix;
+  \item an exact equivalence test between two domains, obtained by finding a
+        \(T\)-space-preserving integral change of basis sending one interior
+        Gram matrix and short-vector family to the other.  Because the matrix
+        lattice \(T_{\ZZ}\) is saturated, the induced transformation matrix
+        in the chosen \(T\)-coordinates is integral.
+\end{itemize}
+The output of the traversal is therefore one representative for each
+iso-Delaunay domain modulo the arithmetic group preserving the \(T\)-space.
+
+\subsection{Enumeration algorithm}
+
+The top-dimensional enumeration is obtained by putting the preceding
+subroutines together.  Its structure is the usual adjacency enumeration:
+maintain a queue of domains still to be processed, compute all neighbours of
+one domain, and insert only those neighbours that are not equivalent to
+previously found domains.
+
+\begin{algorithm}\label{Algo_IsoDelaunayEnumeration}
+\KwData{A \(T\)-space with basis \(B_1,\ldots,B_m\), an arithmetic group
+preserving \(T\), and optionally a common Gram matrix \(Q_{\mathrm{common}}\)}
+\KwResult{A set \({\mathcal R}\) of inequivalent full-dimensional
+iso-Delaunay domains in \(T\)}
+Find a generic initial Delaunay tessellation \(D_0\) in \(T\), compatible with
+\(Q_{\mathrm{common}}\) if such a matrix is prescribed.\\
+\({\mathcal A}_0\leftarrow\) wall inequalities of \(D_0\) by
+Algorithm~\ref{Algo_WallInequalities}.\\
+\(Q_0\leftarrow\) interior Gram matrix obtained from
+Algorithm~\ref{Algo_GeomInterior} applied to \({\mathcal A}_0\).\\
+\({\mathcal T}\leftarrow\{(D_0,Q_0)\}\), \({\mathcal R}\leftarrow\emptyset\).\\
+\While{\({\mathcal T}\neq\emptyset\)}{
+  choose \(C=(D,Q)\in{\mathcal T}\).\\
+  \({\mathcal T}\leftarrow{\mathcal T}\setminus\{C\}\).\\
+  \({\mathcal R}\leftarrow{\mathcal R}\cup\{C\}\).\\
+  \({\mathcal N}\leftarrow\) adjacent domains of \(C\) by
+  Algorithm~\ref{Algo_AdjacentIsoDelaunay}.\\
+  \For{\(C'\in{\mathcal N}\)}{
+    \If{\(C'\) is not equivalent to any domain in \({\mathcal R}\cup{\mathcal T}\)}{
+      \({\mathcal T}\leftarrow{\mathcal T}\cup\{C'\}\).
+    }
+  }
+}
+\KwRet{\({\mathcal R}\)}
+\caption{Enumeration of full-dimensional iso-Delaunay domains}
+\end{algorithm}
+
+\section{Finding iso-Delaunay domains with all rays of full rank}
+
+The following search is more targeted than full enumeration.  Its purpose is to
+find, in a fixed dimension \(n\), a top-dimensional iso-Delaunay domain whose
+every extreme ray gives a full-rank Gram matrix.  The search is not
+dimension-specific.
+
+\subsection{The objective function}
+
+Let \(C\subset T\) be the closure of an iso-Delaunay domain with irredundant
+inequality description.  A dual-description computation returns its extreme
+rays
+\begin{equation}
+  r^{(1)},\ldots,r^{(s)}\in \RR^m .
+\end{equation}
+Each ray is interpreted as a symmetric matrix
+\begin{equation}
+  R_i=\sum_{u=1}^{m} r^{(i)}_u B_u .
+\end{equation}
+The desired property is
+\begin{equation}
+  \rank(R_i)=n \qquad \text{for every extreme ray } i .
+\end{equation}
+The search uses the integer objective
+\begin{equation}
+  \Phi(C)=\sum_{i=1}^{s} (n-\rank(R_i)).
+\end{equation}
+Thus \(\Phi(C)=0\) exactly when all extreme rays have full rank.  For each
+visited domain, the inequalities are recomputed, redundancy is removed by
+Clarkson's algorithm, the extreme rays are computed, and the rank defects are
+summed.  This makes the objective independent of any redundant wall
+description used during adjacency generation.
+
+\begin{algorithm}\label{Algo_RankDefect}
+\KwData{An iso-Delaunay domain \(C\) with Delaunay tessellation \(D\)}
+\KwResult{The rank-defect score \(\Phi(C)\)}
+Compute the wall inequalities of \(D\) by Algorithm~\ref{Algo_WallInequalities}.\\
+Remove redundant inequalities by Clarkson's algorithm.\\
+Compute the extreme rays \(r^{(1)},\ldots,r^{(s)}\) of the resulting cone.\\
+\(\Phi\leftarrow 0\).\\
+\For{\(i=1,\ldots,s\)}{
+  \(R_i\leftarrow\sum_{u=1}^m r^{(i)}_u B_u\).\\
+  \(\Phi\leftarrow \Phi+(n-\rank(R_i))\).
+}
+\KwRet{\(\Phi\)}
+\caption{Rank-defect objective}
+\end{algorithm}
+
+\subsection{Greedy descent with random escapes}
+
+The search starts from a generic iso-Delaunay domain obtained by the same
+initialization procedure as the enumerator.  The strategy is the same one used
+in Frank Vallentin's PhD thesis \cite{VallentinPhD}: move greedily in the
+graph of adjacent \(L\)-types when the objective improves, and use random walks
+to leave local minima.  In that thesis this strategy was used to find record
+lattice coverings in dimension \(6\).
+
+\begin{algorithm}\label{Algo_FullRankSearch}
+\KwData{An \(n\)-dimensional \(T\)-space, a saving threshold \(s_{\max}\), a
+random-walk length \(N_{\rm walk}\), and an iteration bound \(N_{\rm iter}\)}
+\KwResult{A domain \(C\) with \(\Phi(C)=0\), if one is found within the search
+budget}
+\(C\leftarrow\) a generic initial iso-Delaunay domain.\\
+\(\phi\leftarrow\Phi(C)\), computed by Algorithm~\ref{Algo_RankDefect}.\\
+\For{\(t=1,\ldots,N_{\rm iter}\)}{
+  \If{\(\phi=0\)}{
+    \KwRet{\(C\)}
+  }
+  \({\mathcal N}\leftarrow\) adjacent domains of \(C\) by
+  Algorithm~\ref{Algo_AdjacentIsoDelaunay}.\\
+  compute \(\Phi(C')\) for all \(C'\in{\mathcal N}\).\\
+  \(\phi_{\min}\leftarrow \min\{\Phi(C'):C'\in{\mathcal N}\}\).\\
+  \eIf{\(\phi_{\min}<\phi\)}{
+    choose uniformly a domain \(C'\in{\mathcal N}\) with
+    \(\Phi(C')=\phi_{\min}\).\\
+    \(C\leftarrow C'\), \(\phi\leftarrow\phi_{\min}\).\\
+    \If{\(\phi\leq s_{\max}\)}{
+      save the interior Gram matrix of \(C\).
+    }
+  }{
+    perform \(N_{\rm walk}\) random adjacency steps from \(C\).\\
+    replace \(C\) by the endpoint and recompute \(\phi=\Phi(C)\).
+  }
+}
+\KwRet{\bf fail}
+\caption{Search for an iso-Delaunay domain with full-rank rays}
+\end{algorithm}
+
+Whenever the current value satisfies \(\Phi(C)\leq s_{\max}\), the current
+interior Gram matrix is saved.  Taking \(s_{\max}=0\) keeps only successful
+domains.  Positive values keep near misses as well, which is useful for later
+analysis.
+
+\subsection{Search parameters}
+
+The search is controlled by the following parameters:
+\begin{itemize}[leftmargin=2em]
+  \item the threshold \(s_{\max}\) for saving a candidate Gram matrix;
+  \item the length of the random escape walk after a local minimum;
+  \item the cap on the number of outer iterations.
+\end{itemize}
+
+The iteration cap is part of the mathematical design of the search, not only a
+safety guard.  In some dimensions there may be no domain with \(\Phi=0\), so an
+unconditional search for a zero would not terminate.  The search exploits the
+adjacency graph of iso-Delaunay domains until such a domain is found or the
+chosen computational budget is exhausted.
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}
