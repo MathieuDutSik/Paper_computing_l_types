@@ -93,6 +93,14 @@ write \(w\) as an affine combination of this basis, that is,
   \sum_{k=0}^{n}\lambda_k = 1,\qquad
   w = \sum_{k=0}^{n}\lambda_k v_{i_k}.
 \end{equation}
+Here ``affine basis'' means only that the \(n+1\) selected vertices are
+affinely independent, so the coefficients \(\lambda_k\) are real and uniquely
+determined.  This differs from the terminology of Deza and Laurent
+\cite{DezaLaurent1997}, where an affine basis of a lattice polytope is required
+to give integral affine coefficients for every vertex of the polytope.  That
+stronger condition cannot be imposed here: there exist Delaunay polytopes
+having no affine basis in the integral sense
+\cite{DutourSikiricGrishukhin2007}.
 Then the Delaunay condition that \(w\) is outside or on the circumsphere of
 the basis is the linear condition
 \begin{equation}
@@ -217,10 +225,69 @@ system.\\
 \caption{Geometrically unique interior point}
 \end{algorithm}
 
-The initial domain is obtained by sampling a random positive definite matrix in
-\(T\), rejecting it if it has extra symmetry or if some Delaunay polytope
-already imposes an equality in \(T\).  Once a generic tessellation is accepted,
-its defining cone is computed and an interior Gram matrix is attached to it.
+\subsection{Construction of an initial form}
+
+It remains to construct a form lying in a full-dimensional iso-Delaunay
+domain.  This is done iteratively.  Fix a positive-definite matrix
+\(Q_{\mathrm{ref}}\in T\).  For an integer \(N\geq 1\), choose coefficients
+\(c_u\) independently in \(\{-N,\ldots,N\}\), form
+\begin{equation}
+  Q=\sum_{u=1}^{m}c_uB_u,
+\end{equation}
+and add sufficiently many positive multiples of \(Q_{\mathrm{ref}}\) to make
+\(Q\) positive definite.  If an arithmetic automorphism of \(Q\) does not fix
+the \(T\)-space pointwise, discard \(Q\) and sample again.
+
+For a form passing this symmetry test, enumerate its Delaunay tessellation.
+This enumeration may be stopped as soon as a Delaunay polytope imposes a
+nonzero linear equality on \(T\).  Such an equality means that \(Q\) lies on a
+proper iso-Delaunay wall rather than in a full-dimensional domain.  If a
+common form \(Q_{\mathrm{common}}\) is prescribed, stop also when a Delaunay
+polytope of \(Q\) is not Delaunay for \(Q_{\mathrm{common}}\).  A rejected
+tessellation causes the coefficient bound \(N\) to be enlarged before the next
+outer iteration.  Thus the procedure does not remain confined to a finite set
+of unsuitable candidates.
+
+Once a tessellation \(D_0\) passes all tests, its wall inequalities are
+computed and Algorithm~\ref{Algo_GeomInterior} supplies the distinguished
+interior form \(Q_0\).  The iterative construction is summarized in
+Algorithm~\ref{Algo_InitialIsoDelaunay}.
+
+\begin{algorithm}\label{Algo_InitialIsoDelaunay}
+\KwData{The saturated \(T\)-space with basis \(B_1,\ldots,B_m\), a
+positive-definite form \(Q_{\mathrm{ref}}\in T\), and optionally
+\(Q_{\mathrm{common}}\)}
+\KwResult{A Delaunay tessellation \(D_0\) of a full-dimensional
+iso-Delaunay domain and its distinguished interior form \(Q_0\)}
+\(N\leftarrow 2\), \(i\leftarrow 0\).\\
+\While{true}{
+  \(M\leftarrow N\).\\
+  \Repeat{\(Q\) is positive definite and every arithmetic automorphism of
+  \(Q\) fixes \(T\) pointwise}{
+    choose \(c_1,\ldots,c_m\in\{-M,\ldots,M\}\).\\
+    \(Q\leftarrow\sum_{u=1}^{m}c_uB_u\).\\
+    \While{\(Q\) is not positive definite}{
+      \(Q\leftarrow Q+Q_{\mathrm{ref}}\).
+    }
+    \(M\leftarrow M+1\).
+  }
+  Enumerate the Delaunay tessellation \(D\) of \(Q\), stopping if a Delaunay
+  polytope imposes a nonzero equality on \(T\).\\
+  \If{\(Q_{\mathrm{common}}\) is prescribed}{
+    stop the enumeration also if a Delaunay polytope of \(D\) is not
+    Delaunay for \(Q_{\mathrm{common}}\).
+  }
+  \If{the enumeration finishes without stopping}{
+    \({\mathcal A}_0\leftarrow\) wall inequalities of \(D\) by
+    Algorithm~\ref{Algo_WallInequalities}.\\
+    \(Q_0\leftarrow\) result of Algorithm~\ref{Algo_GeomInterior} applied to
+    \({\mathcal A}_0\).\\
+    \KwRet{\((D,Q_0)\)}
+  }
+  \(i\leftarrow i+1\), \(N\leftarrow N+i\).
+}
+\caption{Iterative construction of an initial iso-Delaunay domain}
+\end{algorithm}
 
 \subsection{Adjacent domains and flips}
 
@@ -307,12 +374,8 @@ previously found domains.
 preserving \(T\), and optionally a common Gram matrix \(Q_{\mathrm{common}}\)}
 \KwResult{A set \({\mathcal R}\) of inequivalent full-dimensional
 iso-Delaunay domains in \(T\)}
-Find a generic initial Delaunay tessellation \(D_0\) in \(T\), compatible with
-\(Q_{\mathrm{common}}\) if such a matrix is prescribed.\\
-\({\mathcal A}_0\leftarrow\) wall inequalities of \(D_0\) by
-Algorithm~\ref{Algo_WallInequalities}.\\
-\(Q_0\leftarrow\) interior Gram matrix obtained from
-Algorithm~\ref{Algo_GeomInterior} applied to \({\mathcal A}_0\).\\
+\((D_0,Q_0)\leftarrow\) result of
+Algorithm~\ref{Algo_InitialIsoDelaunay}.\\
 \({\mathcal T}\leftarrow\{(D_0,Q_0)\}\), \({\mathcal R}\leftarrow\emptyset\).\\
 \While{\({\mathcal T}\neq\emptyset\)}{
   choose \(C=(D,Q)\in{\mathcal T}\).\\
@@ -380,8 +443,8 @@ Compute the extreme rays \(r^{(1)},\ldots,r^{(s)}\) of the resulting cone.\\
 
 \subsection{Greedy descent with random escapes}
 
-The search starts from a generic iso-Delaunay domain obtained by the same
-initialization procedure as the enumerator.  The strategy is the same one used
+The search starts from a generic iso-Delaunay domain obtained by
+Algorithm~\ref{Algo_InitialIsoDelaunay}.  The strategy is the same one used
 in Frank Vallentin's PhD thesis \cite{VallentinPhD}: move greedily in the
 graph of adjacent \(L\)-types when the objective improves, and use random walks
 to leave local minima.  In that thesis this strategy was used to find record
@@ -392,7 +455,7 @@ lattice coverings in dimension \(6\).
 random-walk length \(N_{\rm walk}\), and an iteration bound \(N_{\rm iter}\)}
 \KwResult{A domain \(C\) with \(\Phi(C)=0\), if one is found within the search
 budget}
-\(C\leftarrow\) a generic initial iso-Delaunay domain.\\
+\(C\leftarrow\) result of Algorithm~\ref{Algo_InitialIsoDelaunay}.\\
 \(\phi\leftarrow\Phi(C)\), computed by Algorithm~\ref{Algo_RankDefect}.\\
 \For{\(t=1,\ldots,N_{\rm iter}\)}{
   \If{\(\phi=0\)}{
@@ -438,6 +501,7 @@ unconditional search for a zero would not terminate.  The search exploits the
 adjacency graph of iso-Delaunay domains until such a domain is found or the
 chosen computational budget is exhausted.
 
+\nocite{DutourSikiricPolyhedralCommon}
 \bibliographystyle{plain}
 \bibliography{references}
 
