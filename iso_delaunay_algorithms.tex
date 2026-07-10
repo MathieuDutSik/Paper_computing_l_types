@@ -229,8 +229,7 @@ system.\\
 
 It remains to construct a form lying in a full-dimensional iso-Delaunay
 domain.  This is done iteratively.  Fix a positive-definite matrix
-\(Q_{\mathrm{ref}}\in T\).  For an integer \(N\geq 1\), choose coefficients
-\(c_u\) independently in \(\{-N,\ldots,N\}\), form
+\(Q_{\mathrm{ref}}\in T\).  Choose integral coefficients \(c_u\), form
 \begin{equation}
   Q=\sum_{u=1}^{m}c_uB_u,
 \end{equation}
@@ -238,15 +237,19 @@ and add sufficiently many positive multiples of \(Q_{\mathrm{ref}}\) to make
 \(Q\) positive definite.  If an arithmetic automorphism of \(Q\) does not fix
 the \(T\)-space pointwise, discard \(Q\) and sample again.
 
+The random generation starts with simple forms: the coefficients \(c_u\) are
+sampled from a small interval around zero.  If repeated candidates fail the
+tests below, this interval is progressively enlarged.  The precise rate of
+growth is not part of the mathematical algorithm; its purpose is to explore
+low-complexity forms first without restricting the search to a fixed finite
+set.
+
 For a form passing this symmetry test, enumerate its Delaunay tessellation.
 This enumeration may be stopped as soon as a Delaunay polytope imposes a
 nonzero linear equality on \(T\).  Such an equality means that \(Q\) lies on a
 proper iso-Delaunay wall rather than in a full-dimensional domain.  If a
 common form \(Q_{\mathrm{common}}\) is prescribed, stop also when a Delaunay
-polytope of \(Q\) is not Delaunay for \(Q_{\mathrm{common}}\).  A rejected
-tessellation causes the coefficient bound \(N\) to be enlarged before the next
-outer iteration.  Thus the procedure does not remain confined to a finite set
-of unsuitable candidates.
+polytope of \(Q\) is not Delaunay for \(Q_{\mathrm{common}}\).
 
 Once a tessellation \(D_0\) passes all tests, its wall inequalities are
 computed and Algorithm~\ref{Algo_GeomInterior} supplies the distinguished
@@ -259,23 +262,21 @@ positive-definite form \(Q_{\mathrm{ref}}\in T\), and optionally
 \(Q_{\mathrm{common}}\)}
 \KwResult{A Delaunay tessellation \(D_0\) of a full-dimensional
 iso-Delaunay domain and its distinguished interior form \(Q_0\)}
-\(N\leftarrow 2\), \(i\leftarrow 0\).\\
-\While{true}{
-  \(M\leftarrow N\).\\
-  \Repeat{\(Q\) is positive definite and every arithmetic automorphism of
-  \(Q\) fixes \(T\) pointwise}{
-    choose \(c_1,\ldots,c_m\in\{-M,\ldots,M\}\).\\
-    \(Q\leftarrow\sum_{u=1}^{m}c_uB_u\).\\
-    \While{\(Q\) is not positive definite}{
-      \(Q\leftarrow Q+Q_{\mathrm{ref}}\).
-    }
-    \(M\leftarrow M+1\).
+\While{no initial domain has been found}{
+  Choose random integral coefficients \(c_1,\ldots,c_m\) according to the
+  sampling policy described above.\\
+  \(Q\leftarrow\sum_{u=1}^{m}c_uB_u\).\\
+  \While{\(Q\) is not positive definite}{
+    \(Q\leftarrow Q+Q_{\mathrm{ref}}\).
+  }
+  \If{some arithmetic automorphism of \(Q\) does not fix \(T\) pointwise}{
+    discard \(Q\) and continue with another sampled form.
   }
   Enumerate the Delaunay tessellation \(D\) of \(Q\), stopping if a Delaunay
   polytope imposes a nonzero equality on \(T\).\\
   \If{\(Q_{\mathrm{common}}\) is prescribed}{
-    stop the enumeration also if a Delaunay polytope of \(D\) is not
-    Delaunay for \(Q_{\mathrm{common}}\).
+    stop the enumeration also if a Delaunay polytope is not Delaunay for
+    \(Q_{\mathrm{common}}\).
   }
   \If{the enumeration finishes without stopping}{
     \({\mathcal A}_0\leftarrow\) wall inequalities of \(D\) by
@@ -284,7 +285,6 @@ iso-Delaunay domain and its distinguished interior form \(Q_0\)}
     \({\mathcal A}_0\).\\
     \KwRet{\((D,Q_0)\)}
   }
-  \(i\leftarrow i+1\), \(N\leftarrow N+i\).
 }
 \caption{Iterative construction of an initial iso-Delaunay domain}
 \end{algorithm}
