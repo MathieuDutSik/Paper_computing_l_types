@@ -451,8 +451,8 @@ to leave local minima.  In that thesis this strategy was used to find record
 lattice coverings in dimension \(6\).
 
 \begin{algorithm}\label{Algo_FullRankSearch}
-\KwData{An \(n\)-dimensional \(T\)-space, a saving threshold \(s_{\max}\), a
-random-walk length \(N_{\rm walk}\), and an iteration bound \(N_{\rm iter}\)}
+\KwData{An \(n\)-dimensional \(T\)-space, a random-walk length
+\(N_{\rm walk}\), and an iteration bound \(N_{\rm iter}\)}
 \KwResult{A domain \(C\) with \(\Phi(C)=0\), if one is found within the search
 budget}
 \(C\leftarrow\) result of Algorithm~\ref{Algo_InitialIsoDelaunay}.\\
@@ -469,9 +469,6 @@ budget}
     choose uniformly a domain \(C'\in{\mathcal N}\) with
     \(\Phi(C')=\phi_{\min}\).\\
     \(C\leftarrow C'\), \(\phi\leftarrow\phi_{\min}\).\\
-    \If{\(\phi\leq s_{\max}\)}{
-      save the interior Gram matrix of \(C\).
-    }
   }{
     perform \(N_{\rm walk}\) random adjacency steps from \(C\).\\
     replace \(C\) by the endpoint and recompute \(\phi=\Phi(C)\).
@@ -481,16 +478,13 @@ budget}
 \caption{Search for an iso-Delaunay domain with full-rank rays}
 \end{algorithm}
 
-Whenever the current value satisfies \(\Phi(C)\leq s_{\max}\), the current
-interior Gram matrix is saved.  Taking \(s_{\max}=0\) keeps only successful
-domains.  Positive values keep near misses as well, which is useful for later
-analysis.
+The output condition is exactly \(\Phi(C)=0\).  In this case every extreme ray
+of the iso-Delaunay domain has full rank.
 
 \subsection{Search parameters}
 
 The search is controlled by the following parameters:
 \begin{itemize}[leftmargin=2em]
-  \item the threshold \(s_{\max}\) for saving a candidate Gram matrix;
   \item the length of the random escape walk after a local minimum;
   \item the cap on the number of outer iterations.
 \end{itemize}
