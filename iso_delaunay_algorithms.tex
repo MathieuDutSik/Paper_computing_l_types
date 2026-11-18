@@ -1,25 +1,14 @@
-\documentclass[11pt]{article}
-
-\usepackage[a4paper,margin=1in]{geometry}
-\usepackage{amsmath,amssymb,amsthm}
-\usepackage{algorithm2e}
+\documentclass{amsart}
+\usepackage{amsfonts, amsmath, amssymb}
+\usepackage[norelsize]{algorithm2e}
 \usepackage{enumitem}
-\usepackage{hyperref}
 \usepackage{xcolor}
-
-\hypersetup{
-  colorlinks=true,
-  linkcolor=blue!45!black,
-  citecolor=blue!45!black,
-  urlcolor=blue!45!black
-}
+\usepackage[hidelinks]{hyperref}
 
 \newtheorem{theorem}{Theorem}
 \newtheorem{lemma}{Lemma}
-\theoremstyle{definition}
 \newtheorem{definition}{Definition}
 \newtheorem{remark}{Remark}
-\numberwithin{equation}{section}
 
 % Places where an input of the author is still needed.
 \newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
@@ -35,27 +24,72 @@
 \newcommand{\RR}{\mathbb{R}}
 \newcommand{\QQ}{\mathbb{Q}}
 
-\title{Algorithms for Computing Iso-Delaunay Domains}
-\author{Mathieu Dutour Sikiri{\'c}}
-\date{\today}
-
 \begin{document}
-\maketitle
+
+\author{Mathieu Dutour Sikiri\'c}
+\address{Mathieu Dutour Sikiri\'c, MSM programming, Karlovacka cesta 28B, 10452 Klinca selo}
+\email{mathieu.dutour@gmail.com}
+
+\title{Algorithms for computing iso-Delaunay domains}
+
+\date{}
 
 \begin{abstract}
-This note records an algorithm for enumerating iso-Delaunay domains, also
-called \(T\)-secondary cones or \(L\)-type domains in a prescribed linear space
-\(T\) of quadratic forms.  The first section gives the enumeration algorithm.
-The second section explains a randomized search for an iso-Delaunay domain
-whose extreme rays all define full-rank Gram matrices.  The third section
-reports the outcome of this search in dimension \(6\): there exist
-\(21\)-dimensional \(L\)-type domains of positive definite quadratic forms in
-six variables all of whose extreme rays are positive definite.  We found
-\(1472\) pairwise inequivalent such domains, the smallest having \(24\) facets
-and \(47\) extreme rays.
+For a linear space \(T\) of quadratic forms, we describe an algorithm
+enumerating the iso-Delaunay domains of \(T\), and a randomized search for an
+iso-Delaunay domain all of whose extreme rays are positive definite.  For the
+quadratic forms in six variables, the search finds \(1472\) pairwise
+inequivalent \(L\)-type domains all of whose extreme rays are positive
+definite, the smallest having \(24\) facets and \(47\) extreme rays.  No such
+domain exists in dimension \(2\leq n\leq 5\).
 \end{abstract}
 
-\section{Enumeration of iso-Delaunay domains}
+\maketitle
+
+\section{Introduction}
+
+Let \(T\) be a linear space of symmetric \(n\times n\) matrices containing a
+positive definite one.  The positive definite forms of \(T\) that have the
+same Delaunay tessellation form a relatively open polyhedral cone, an
+iso-Delaunay domain, also called a \(T\)-secondary cone
+\cite{DutourSikiriSchurmannVallentin2008}.  For \(T=\Sym_n(\RR)\) these are
+the \(L\)-type domains of Voronoi's second reduction theory
+\cite{Voronoi1908}, and the full-dimensional ones correspond to the
+combinatorial types of primitive parallelohedra.
+
+Several programs enumerate iso-Delaunay domains.  Some treat only the full
+space \(T=\Sym_n(\RR)\): the secondary cone cruiser \texttt{scc} of
+Sch\"urmann and Vallentin \cite{SchurmannVallentinSCC}, which was one of the
+implementations used for the complete classification in dimension \(5\)
+\cite{DutourSikiricGarberSchurmannWaldmann2016}, and the program of Baburin
+and Engel, who enumerated several hundred million \(L\)-types in dimension
+\(6\) without completing the enumeration \cite{BaburinEngel2013}.  Others
+treat a general \(T\)-space: the GAP package \texttt{polyhedral}
+\cite{DutourSikiricGAPpolyhedral} and its C++ version
+\cite{DutourSikiricPolyhedralCommon}, which is the one described and used
+here, and the Julia code of Miebach \cite{Miebach2025}, who used it for the
+sphere coverings of Eisenstein, Gaussian and Hurwitzian lattices.
+
+We consider the following question: is there a full-dimensional iso-Delaunay
+domain all of whose extreme rays are positive definite forms?  In the
+classical case \(T=\Sym_n(\RR)\) the extreme rays of an \(L\)-type domain often
+include forms of rank \(1\), and for \(2\leq n\leq 5\) every full-dimensional
+domain has such a ray.  We show that the answer is positive for \(n=6\).
+
+\begin{theorem}
+There exist \(L\)-type domains of positive definite quadratic forms in six
+variables, of dimension \(21\), all of whose extreme rays are positive
+definite.
+\end{theorem}
+
+In Section~\ref{sec:enum} we describe the enumeration of the iso-Delaunay
+domains of a space \(T\), together with a canonical interior point of a
+polyhedral cone, which is of independent interest.  In
+Section~\ref{sec:search} we describe a randomized search for a domain all of
+whose extreme rays have full rank, and in Section~\ref{sec:dim6} we report
+its outcome for \(n=6\): \(1472\) pairwise inequivalent such domains.
+
+\section{Enumeration of iso-Delaunay domains}\label{sec:enum}
 
 \subsection{The input space}
 
@@ -94,9 +128,7 @@ The algorithm follows the \(T\)-secondary-cone theory of
 Voronoi's reduction theory \cite{Voronoi1908}.  The finite object that is
 enumerated is not the full infinite tessellation of \(\RR^n\), but a list of
 orbits of Delaunay polytopes together with facet adjacencies and stabilizer
-groups.  Another implementation of the enumeration of iso-Delaunay domains in
-\(T\)-spaces is due to Miebach \cite{Miebach2025}, who used it for the sphere
-coverings of Eisenstein, Gaussian and Hurwitzian lattices.
+groups.
 
 \begin{remark}\label{rem:non_simplicial}
 For \(T=\Sym_n(\RR)\) the Delaunay tessellation of a form in a
@@ -480,18 +512,25 @@ split into three classes:
 \end{itemize}
 After the higher facets have been identified modulo the local symmetry group,
 one reconstructs the whole finite orbit description of the new Delaunay
-tessellation and recomputes its facet adjacencies.
+tessellation and recomputes its facet adjacencies.  All the flips across the
+walls of one domain start from the same tessellation \(D\), so the data
+depending only on \(D\), such as the stabilizers of its Delaunay polytopes,
+are computed once and shared by these flips.
 
 \begin{algorithm}
 \KwData{An iso-Delaunay domain \(C\), represented by its Delaunay tessellation
-\(D\), an interior form \(Q\), and the wall inequalities of \(C\); optionally a
-common form \(G\)}
+\(D\), an interior form \(Q\), and the wall inequalities of \(C\); a set
+\({\mathcal K}\) of walls of \(C\) whose adjacent domain is already known;
+optionally a common form \(G\)}
 \KwResult{The list of positive-definite iso-Delaunay domains adjacent to \(C\),
-one for each orbit of walls of \(C\) under its stabilizer}
+one for each orbit of walls of \(C\) under its stabilizer that meets no wall
+of \({\mathcal K}\)}
 \({\mathcal N}\leftarrow\emptyset\).\\
 Compute the stabilizer of \(C\) in the arithmetic group preserving \(T\).\\
-Compute orbit representatives of the irredundant walls of \(C\).\\
-\For{each wall representative \(F\), with inequality \(a_F\)}{
+Compute orbit representatives of the irredundant walls of \(C\), taking the
+walls of \({\mathcal K}\) as the representatives of their orbits.\\
+\For{each wall representative \(F\notin{\mathcal K}\), with inequality
+\(a_F\)}{
   compute a point \(q_F\) in the relative interior of \(F\).\\
   \If{\(Q(q_F)\) is not positive definite}{
     continue to the next wall.
@@ -548,6 +587,17 @@ maintain a queue of domains still to be processed, compute all neighbours of
 one domain, and insert only those neighbours that are not equivalent to
 previously found domains.
 
+The adjacency relation is symmetric, and this saves flips.  Suppose that
+crossing the wall \(F\) of \(C\), with inequality \(a_F\), gives a domain
+\(C'\), and that \(C'=g\,C''\) for a domain \(C''\) of the queue and an
+element \(g\) of the arithmetic group.  Then \(C'\) has the wall \(F\), with
+inequality \(-a_F\), and crossing it leads back to \(C\).  Hence the wall
+\(g^{-1}F\) of \(C''\) leads to a domain equivalent to \(C\), which need not
+be computed when \(C''\) is processed.  Such walls are recorded with the
+domains of the queue and passed to Algorithm~\ref{Algo_AdjacentIsoDelaunay}.
+In this way each orbit of walls is crossed from one side only, which roughly
+halves the number of flips.
+
 \begin{algorithm}
 \KwData{A \(T\)-space with basis \(B_1,\ldots,B_m\), an arithmetic group
 preserving \(T\), and optionally a common Gram matrix \(Q_{\mathrm{common}}\)}
@@ -556,16 +606,23 @@ iso-Delaunay domains in \(T\), restricted to the star of
 \(Q_{\mathrm{common}}\) if it is given}
 \((D_0,Q_0)\leftarrow\) result of
 Algorithm~\ref{Algo_InitialIsoDelaunay}.\\
-\({\mathcal T}\leftarrow\{(D_0,Q_0)\}\), \({\mathcal R}\leftarrow\emptyset\).\\
+\({\mathcal T}\leftarrow\{(D_0,Q_0)\}\), \({\mathcal R}\leftarrow\emptyset\),
+\({\mathcal K}(D_0,Q_0)\leftarrow\emptyset\).\\
 \While{\({\mathcal T}\neq\emptyset\)}{
   choose \(C=(D,Q)\in{\mathcal T}\).\\
   \({\mathcal T}\leftarrow{\mathcal T}\setminus\{C\}\).\\
   \({\mathcal R}\leftarrow{\mathcal R}\cup\{C\}\).\\
   \({\mathcal N}\leftarrow\) adjacent domains of \(C\) by
-  Algorithm~\ref{Algo_AdjacentIsoDelaunay}.\\
-  \For{\(C'\in{\mathcal N}\)}{
-    \If{\(C'\) is not equivalent to any domain in \({\mathcal R}\cup{\mathcal T}\)}{
-      \({\mathcal T}\leftarrow{\mathcal T}\cup\{C'\}\).
+  Algorithm~\ref{Algo_AdjacentIsoDelaunay}, with the known walls
+  \({\mathcal K}(C)\).\\
+  \For{\(C'\in{\mathcal N}\), obtained by crossing the wall \(F\) of \(C\)}{
+    \eIf{\(C'=g\,C''\) for some \(C''\in{\mathcal R}\cup{\mathcal T}\)}{
+      \If{\(C''\in{\mathcal T}\)}{
+        \({\mathcal K}(C'')\leftarrow{\mathcal K}(C'')\cup\{g^{-1}F\}\).
+      }
+    }{
+      \({\mathcal T}\leftarrow{\mathcal T}\cup\{C'\}\),
+      \({\mathcal K}(C')\leftarrow\{F\}\).
     }
   }
 }
@@ -574,7 +631,7 @@ Algorithm~\ref{Algo_InitialIsoDelaunay}.\\
 \label{Algo_IsoDelaunayEnumeration}
 \end{algorithm}
 
-\section{Finding iso-Delaunay domains with all rays of full rank}
+\section{Finding iso-Delaunay domains with all rays of full rank}\label{sec:search}
 
 The following search is more targeted than full enumeration.  Its purpose is to
 find, in a fixed dimension \(n\), a top-dimensional iso-Delaunay domain whose
@@ -752,7 +809,7 @@ larger stabilizer does not, so the list of walls has to be closed under it
 before the redundancy is removed; otherwise the cone obtained is not the
 iso-Delaunay domain.  For \(1457\) of the saved forms the stabilizer is
 \(\{\pm 1\}\), and for the other \(15\) it has order \(4\).  The
-enumeration of Section~1 is not concerned: it computes one Delaunay
+enumeration of Section~\ref{sec:enum} is not concerned: it computes one Delaunay
 tessellation, for a form without accidental symmetry, and obtains the other
 tessellations by flips, so that its lists of Delaunay polytopes are never
 reduced by the stabilizer of a later domain.
@@ -805,7 +862,7 @@ This section follows the recommendation of the Leiden Declaration on
 Artificial Intelligence and Mathematics \cite{LeidenDeclaration2026}.
 
 \paragraph{Mathematical software.}
-The algorithms of Sections~1 and~2 are implemented in the C++ programs of
+The algorithms of Sections~\ref{sec:enum} and~\ref{sec:search} are implemented in the C++ programs of
 \cite{DutourSikiricPolyhedralCommon}, with no external library for linear
 programming or polyhedral computations: the exact simplex method and
 Clarkson's redundancy removal are implemented there.  The dual descriptions
@@ -830,12 +887,12 @@ The author has checked the mathematical content, the proofs and the
 computations, and takes full responsibility for the correctness of the paper
 and of its citations.
 
-\bibliographystyle{plain}
-\bibliography{references}
-
 \appendix
 \section{The smallest domain of Theorem~\ref{thm:dim6}}\label{app:example}
 
 \input{example_101}
+
+\bibliographystyle{plain}
+\bibliography{references}
 
 \end{document}
