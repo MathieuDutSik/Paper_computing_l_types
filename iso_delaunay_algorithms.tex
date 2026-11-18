@@ -14,9 +14,15 @@
   urlcolor=blue!45!black
 }
 
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\theoremstyle{definition}
 \newtheorem{definition}{Definition}
 \newtheorem{remark}{Remark}
 \numberwithin{equation}{section}
+
+% Places where an input of the author is still needed.
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
 
 \newcommand{\Sym}{\operatorname{Sym}}
 \newcommand{\GL}{\operatorname{GL}}
@@ -24,8 +30,10 @@
 \newcommand{\Del}{\operatorname{Del}}
 \newcommand{\cone}{\operatorname{cone}}
 \newcommand{\linspan}{\operatorname{span}}
+\newcommand{\relint}{\operatorname{relint}}
 \newcommand{\ZZ}{\mathbb{Z}}
 \newcommand{\RR}{\mathbb{R}}
+\newcommand{\QQ}{\mathbb{Q}}
 
 \title{Algorithms for Computing Iso-Delaunay Domains}
 \author{Mathieu Dutour Sikiri{\'c}}
@@ -39,7 +47,12 @@ This note records an algorithm for enumerating iso-Delaunay domains, also
 called \(T\)-secondary cones or \(L\)-type domains in a prescribed linear space
 \(T\) of quadratic forms.  The first section gives the enumeration algorithm.
 The second section explains a randomized search for an iso-Delaunay domain
-whose extreme rays all define full-rank Gram matrices.
+whose extreme rays all define full-rank Gram matrices.  The third section
+reports the outcome of this search in dimension \(6\): there exist
+\(21\)-dimensional \(L\)-type domains of positive definite quadratic forms in
+six variables all of whose extreme rays are positive definite.  We found
+\(1472\) pairwise inequivalent such domains, the smallest having \(24\) facets
+and \(47\) extreme rays.
 \end{abstract}
 
 \section{Enumeration of iso-Delaunay domains}
@@ -71,7 +84,8 @@ Its closure is a rational polyhedral cone in \(T\).
 
 In particular, if \(U\in\GL_n(\ZZ)\) preserves \(T\), then
 \(Q\mapsto U^tQU\) preserves \(T_{\ZZ}\).  Its induced matrix in the above
-\(T\)-coordinates therefore belongs to \(\GL_m(\ZZ)\).  This integral
+\(T\)-coordinates therefore belongs to \(\GL_m(\ZZ)\).  We write
+\(\GL(T_{\ZZ})\) for the group of these induced matrices.  This integral
 coordinate structure is also used in the enumeration of \(T\)-perfect forms
 \cite{Schuermann2009}.
 
@@ -80,7 +94,19 @@ The algorithm follows the \(T\)-secondary-cone theory of
 Voronoi's reduction theory \cite{Voronoi1908}.  The finite object that is
 enumerated is not the full infinite tessellation of \(\RR^n\), but a list of
 orbits of Delaunay polytopes together with facet adjacencies and stabilizer
-groups.
+groups.  Another implementation of the enumeration of iso-Delaunay domains in
+\(T\)-spaces is due to Miebach \cite{Miebach2025}, who used it for the sphere
+coverings of Eisenstein, Gaussian and Hurwitzian lattices.
+
+\begin{remark}\label{rem:non_simplicial}
+For \(T=\Sym_n(\RR)\) the Delaunay tessellation of a form in a
+full-dimensional iso-Delaunay domain is a triangulation.  For a general
+\(T\)-space this is no longer true: the Delaunay polytopes of a generic form of
+\(T\) need not be simplices.  What characterizes the forms of a
+full-dimensional domain is that no Delaunay polytope imposes a nonzero linear
+equality on \(T\); see \eqref{eq:wall_inequality} below and
+Section~\ref{sec:initial}.
+\end{remark}
 
 \subsection{Linear inequalities from one Delaunay wall}
 
@@ -89,7 +115,7 @@ associated with a Delaunay polytope \(P\) and a neighbouring Delaunay polytope
 \(P'\).  Let \(v_1,\ldots,v_s\in\ZZ^n\) be the vertices of \(P\), and choose
 an affine basis \(v_{i_0},\ldots,v_{i_n}\) of \(P\).  For a test vertex \(w\),
 write \(w\) as an affine combination of this basis, that is,
-\begin{equation}
+\begin{equation}\label{eq:affine_combination}
   \sum_{k=0}^{n}\lambda_k = 1,\qquad
   w = \sum_{k=0}^{n}\lambda_k v_{i_k}.
 \end{equation}
@@ -103,15 +129,21 @@ having no affine basis in the integral sense
 \cite{DutourSikiricGrishukhin2007}.
 Then the Delaunay condition that \(w\) is outside or on the circumsphere of
 the basis is the linear condition
-\begin{equation}
+\begin{equation}\label{eq:wall_inequality}
   \sum_{u=1}^{m} q_u
   \left(
     \ell_u(w) - \sum_{k=0}^{n}\lambda_k \ell_u(v_{i_k})
   \right) \geq 0 .
 \end{equation}
+When \(w\) is itself a vertex of \(P\) the left-hand side must vanish, which
+is a linear equality on \(T\); it is nonzero exactly when \(P\) cannot remain
+a Delaunay polytope on an open subset of \(T\).
+
 For an actual facet adjacency \(P,P'\), any vertex of \(P'\setminus P\) gives
-the same inequality up to a scalar factor.  The scalar is canonicalized, and
-all Delaunay-adjacency records producing that same wall are grouped together.
+the same inequality up to a positive scalar factor.  The scalar is
+canonicalized by taking the unique primitive integral vector of the ray, which
+is possible since the coefficients of \eqref{eq:wall_inequality} are rational.
+All Delaunay-adjacency records producing that same wall are grouped together.
 
 For a Delaunay tessellation \(D\), one loops over all orbits of Delaunay
 polytopes and over all their facet adjacencies.  This gives
@@ -121,22 +153,29 @@ polytopes and over all their facet adjacencies.  This gives
 the full half-space description of the closure of the iso-Delaunay domain.
 Redundant inequalities are then removed, leaving the irredundant wall
 description used for adjacency.  This redundancy removal is carried out by
-Clarkson's output-sensitive redundancy algorithm \cite{Clarkson1994}, using
-the implementation available in cddlib \cite{FukudaCddlib}.
+Clarkson's output-sensitive redundancy algorithm \cite{Clarkson1994}.  The
+implementation is the one of \cite{DutourSikiricPolyhedralCommon}: it is built
+on an exact fraction-free simplex method, whose first phase is run in
+floating-point arithmetic and its terminal basis then certified, or repaired,
+in exact arithmetic, and it warm-starts the successive linear programs of
+Clarkson's algorithm.  The same exact simplex method solves the linear programs
+of Algorithm~\ref{Algo_GeomInterior}.
 
-\begin{algorithm}\label{Algo_WallInequalities}
+\begin{algorithm}
 \KwData{A Delaunay tessellation \(D\) represented by orbit representatives of
 Delaunay polytopes and their facet adjacencies; a basis
-\(B_1,\ldots,B_m\) of \(T\)}
+\(B_1,\ldots,B_m\) of \(T_{\ZZ}\)}
 \KwResult{The irredundant wall inequalities of the iso-Delaunay cone of \(D\)}
 ${\mathcal A}\leftarrow \emptyset$.\\
 \For{each orbit representative \(P\) of a Delaunay polytope of \(D\)}{
   choose an affine basis \(v_{i_0},\ldots,v_{i_n}\) of \(P\).\\
   \For{each facet-neighbour \(P'\) of \(P\)}{
     choose a vertex \(w\in P'\setminus P\).\\
-    compute \(\lambda_0,\ldots,\lambda_n\) from (1.2).\\
-    \(a(q)\leftarrow\) the linear form occurring in (1.3).\\
-    replace \(a\) by its canonical scalar multiple.\\
+    compute \(\lambda_0,\ldots,\lambda_n\) from
+    \eqref{eq:affine_combination}.\\
+    \(a(q)\leftarrow\) the linear form occurring in
+    \eqref{eq:wall_inequality}.\\
+    replace \(a\) by its primitive integral positive multiple.\\
     append to \(a\) the adjacency record \((P,P')\).\\
     ${\mathcal A}\leftarrow {\mathcal A}\cup\{a\}$, merging equal canonical
     inequalities and their adjacency records.\\
@@ -145,87 +184,175 @@ ${\mathcal A}\leftarrow \emptyset$.\\
 remove redundant inequalities from \({\mathcal A}\) by Clarkson's algorithm.\\
 \KwRet{\({\mathcal A}\)}
 \caption{Wall inequalities of an iso-Delaunay cone}
+\label{Algo_WallInequalities}
 \end{algorithm}
 
-\subsection{Interior form of a domain}
+\subsection{A canonical interior point of a polyhedral cone}\label{sec:interior}
+
+The enumeration needs a representative point in the interior of each
+iso-Delaunay domain.  The construction of this point is not specific to
+iso-Delaunay domains.  It applies to any pointed rational polyhedral cone and
+gives a canonical representative whenever such cones are classified up to the
+action of an arithmetic group, for instance the perfect domains of Voronoi's
+algorithm \cite{Voronoi1908,Schuermann2009} as well as the iso-Delaunay
+domains considered here.  We therefore state it in this generality, and
+return to iso-Delaunay domains at the end of this section.
 
 Let
 \begin{equation}
   C=\{q\in\RR^m : a_i(q)\geq 0,\ 1\leq i\leq N\}
 \end{equation}
-be the closure of an iso-Delaunay cone, assumed full-dimensional in its
-ambient \(T\)-space.  The enumeration needs a representative point in the
-relative interior of \(C\).  A generic linear program would find such a point,
-but the result would depend on accidental choices in the linear program.  The
-algorithm instead constructs a point that is canonical with respect to
-permuting the inequalities and equivariant under linear changes of coordinates
-in \(T\).
+be a full-dimensional pointed polyhedral cone in \(\RR^m\) with rational
+facets.  We take for \(a_1,\ldots,a_N\) the facet-defining inequalities of
+\(C\), each normalized to be primitive integral: \(a_i(q)=\langle
+\alpha_i,q\rangle\) with \(\alpha_i\in\ZZ^m\) having coprime coordinates.
+This list is determined by \(C\) up to order.  The goal is to choose a point
+\(p(C)\) in the interior of \(C\) such that
+\begin{enumerate}[label=(\roman*)]
+  \item \(p(C)\) depends only on \(C\), and not on the order of the
+        inequalities;
+  \item \(p(A\,C)=A\,p(C)\) for every \(A\in\GL_m(\ZZ)\).
+\end{enumerate}
+In particular \(p(C)\) is fixed by the stabilizer of \(C\) in
+\(\GL_m(\ZZ)\).  A generic linear program would find an interior point, but
+the result would depend on accidental choices in the linear program.
 
+\paragraph{The first linear program.}
 The first step fixes the scale of the cone by working on the affine section
 \begin{equation}
   S=\{q\in\RR^m : a_i(q)\geq 1 \text{ for all } i\}.
 \end{equation}
 On this section minimize the symmetric objective
-\begin{equation}
+\begin{equation}\label{eq:sym_objective}
   \sum_{i=1}^{N} (a_i(q)-1),
 \end{equation}
-or, what is the same, minimize \(\sum_i a_i(q)\).  This objective is the sum of
-all inequalities, so it is independent of their order.  If the optimum is a
-single point, that point is returned.  It lies in the interior of \(C\), since
-all inequalities in the scaled section are strict or equal to \(1>0\).
-
-If the optimum is not a single point, the linear program has selected a
-positive-dimensional optimal face
+which is the sum of all inequalities and is therefore independent of their
+order.  The linear program is bounded and its optimal face
 \begin{equation}
   F=\left\{q\in S : \sum_i(a_i(q)-1)=\mu\right\},
 \end{equation}
-where \(\mu\) is the optimal value.  One then works in the direction space
+where \(\mu\geq 0\) is the optimal value, is a polytope.  Indeed, the linear
+form \(\sum_i a_i\) is positive on \(C\setminus\{0\}\): if it vanishes at
+\(q\in C\) then every \(a_i(q)\) vanishes, and \(q=0\) since \(C\) is
+pointed.  If \(F\) is a single point, that point is returned.  It lies in the
+interior of \(C\), since \(a_i(q)\geq 1>0\) for every \(i\).
+
+\paragraph{The degenerate case.}
+The recursion is cleanest in homogeneous coordinates, and this is how it is
+implemented.  Put \(\hat q=(t,q)\in\RR^{1+m}\) and consider the cone
 \begin{equation}
-  L_F=\linspan\{q-q' : q,q'\in F\}.
+  K=\{(t,q) : a_i(q)-t\geq 0,\ 1\leq i\leq N\},
 \end{equation}
-The inequalities that still cut the face nontrivially are projected to
-coordinates on \(L_F\), and the same construction is applied recursively in
-that lower-dimensional space.
+whose section \(t=1\) is \(S\).  The optimal value defines the hyperplane
+\begin{equation}
+  H=\left\{(t,q) : \sum_{i=1}^N a_i(q)-(N+\mu)t=0\right\},
+\end{equation}
+whose section \(t=1\) is the affine span of the optimal objective level.
+Inside the linear space \(H\), some of the inequalities \(a_i(q)-t\geq 0\)
+are equalities on all of \(K\cap H\).  Let \(W\subseteq H\) be the linear
+space they define and let \(I\) be the set of the remaining inequalities,
+those that are not identically zero on \(W\).  Then \(K\cap W\) is a
+full-dimensional cone of \(W\) described by the inequalities in \(I\), and
+its section \(t=1\) is \(F\).
 
-The recursion strictly lowers the dimension whenever the first minimization is
-degenerate.  At the last step either the symmetric linear program has a unique
-solution or the remaining optimal face has no further nontrivial direction.
-Pulling the recursive solution back through the successive affine projections
-gives the final point \(q\in C\).
+\begin{lemma}\label{lem:positive_t}
+If \(F\) is not a single point, then \(\mu>0\) and \(t>0\) on
+\((K\cap W)\setminus\{0\}\).
+\end{lemma}
 
+\begin{proof}
+If \(\mu=0\), the optimum is attained exactly at the points with
+\(a_i(q)=1\) for all \(i\).  Two distinct such points differ by a nonzero
+\(d\) with \(a_i(d)=0\) for all \(i\), which contradicts the pointedness of
+\(C\).  Hence \(\mu>0\).  For \((t,q)\in K\cap H\), summing the inequalities
+\(a_i(q)\geq t\) gives \((N+\mu)t=\sum_i a_i(q)\geq Nt\), that is
+\(\mu t\geq 0\), so \(t\geq 0\).  If \(t=0\), then every \(a_i(q)\geq 0\)
+and \(\sum_i a_i(q)=0\), so \(q=0\) as above.
+\end{proof}
+
+The construction is now applied recursively to the cone \(K\cap W\) of \(W\),
+in coordinates of \(W\).  By Lemma~\ref{lem:positive_t} this cone is pointed
+and the point \((t_0,q_0)\) returned by the recursion has \(t_0>0\); the
+algorithm returns \(q_0/t_0\).  This is a point of the relative interior of
+\(F\), hence an interior point of \(C\).  The recursion terminates since
+\(\dim W<\dim H<1+m\) whenever \(F\) is not a single point; in the
+implementation the case \(\dim W=1\), where \(K\cap W\) is the single ray over
+\(F\), returns the solution of the linear program directly.
+
+\paragraph{Equivariance.}
 This construction uses only linear programming and linear algebra; no full
-dual-description computation is needed.  It is geometrically canonical in the
-following sense.  Permuting the inequalities does not change the point, and a
-linear change of coordinates in \(T\) sends the selected point by the
-contragredient transformation.  Rescaling the inequalities individually is not
-an invariance of the construction, so a canonical normalization of the wall
-inequalities is part of the preceding step.
+dual-description computation is needed.  Permuting the inequalities does not
+change the point.  The recursion only uses the restrictions of the forms
+\(a_i(q)-t\) to \(W\), which do not depend on the basis chosen for \(W\).  Let
+\(A\in\GL_m(\ZZ)\) act on coordinates by \(q\mapsto Aq\).  The facet
+inequalities of \(A\,C\) are the forms \(a_i\circ A^{-1}\), and since
+\(A^{-1}\) is an integral unimodular matrix these are again primitive
+integral.  Hence the normalized inequalities of \(A\,C\) are exactly the
+transforms of those of \(C\), each step above commutes with \(A\), and
+\(p(A\,C)=A\,p(C)\).  Equivariance does not hold for an arbitrary linear
+change of coordinates, nor for an individual rescaling of the inequalities,
+because the primitive normalization depends on the lattice \(\ZZ^m\).  The
+lattice must therefore be fixed before the point is computed.
 
-\begin{algorithm}\label{Algo_GeomInterior}
-\KwData{A full-dimensional cone \(C=\{q:a_i(q)\geq 0\}\), with the
-inequalities \(a_i\) canonically scaled}
-\KwResult{A geometrically canonical point in the relative interior of \(C\)}
-\If{\(\dim C=0\)}{
-  \KwRet{the unique point of \(C\)}
+\begin{algorithm}
+\KwData{A full-dimensional pointed cone \(C=\{q\in\RR^m:a_i(q)\geq 0\}\),
+given by its facet inequalities \(a_i\), each primitive integral}
+\KwResult{A point \(p(C)\) in the interior of \(C\), equivariant under
+\(\GL_m(\ZZ)\)}
+Solve the linear program minimizing \(\sum_i(a_i(q)-1)\) subject to
+\(a_i(q)\geq 1\); let \(\mu\) be the optimal value and \(q^*\) a solution.\\
+\If{the optimal face is the single point \(q^*\)}{
+  \KwRet{\(q^*\)}
 }
-\(S\leftarrow \{q:a_i(q)\geq 1\mbox{ for all }i\}\).\\
-Solve the linear program minimizing \(\sum_i(a_i(q)-1)\) on \(S\).\\
-\(F\leftarrow\) the optimal face of this linear program.\\
-\If{\(F\) is a single point \(q\)}{
-  \KwRet{\(q\)}
+\(K\leftarrow\{(t,q):a_i(q)-t\geq 0\}\),
+\(H\leftarrow\{(t,q):\sum_i a_i(q)-(N+\mu)t=0\}\).\\
+\(W\leftarrow\) the subspace of \(H\) cut out by the inequalities that are
+equalities on \(K\cap H\).\\
+\If{\(\dim W=1\)}{
+  \KwRet{\(q^*\)}
 }
-\(L_F\leftarrow\linspan\{q-q':q,q'\in F\}\).\\
-Choose an affine parametrization \(q=p+Uy\) of \(F\), with columns of \(U\)
-spanning \(L_F\).\\
-Project to the \(y\)-coordinates the inequalities that are not identically
-constant on \(p+L_F\).\\
-\(y_0\leftarrow\) result of Algorithm~\ref{Algo_GeomInterior} for the projected
-system.\\
-\KwRet{\(p+Uy_0\)}
+Express the inequalities that are not identically zero on \(W\) in a basis of
+\(W\).\\
+\((t_0,q_0)\leftarrow\) result of Algorithm~\ref{Algo_GeomInterior} applied
+to this cone of \(W\), mapped back to \(\RR^{1+m}\).\\
+\KwRet{\(q_0/t_0\)}
 \caption{Geometrically unique interior point}
+\label{Algo_GeomInterior}
 \end{algorithm}
 
-\subsection{Construction of an initial form}
+The point of this canonical choice is the following statement, which reduces
+the equivalence of cones to the equivalence of points.
+
+\begin{lemma}\label{lem:canonical_equivalence}
+Let \(\Gamma\subseteq\GL_m(\ZZ)\) be a group and let \(\mathcal{F}\) be a
+\(\Gamma\)-invariant family of full-dimensional pointed rational polyhedral
+cones in \(\RR^m\) with pairwise disjoint interiors.  For \(C,C'\in
+\mathcal{F}\), we have \(C'=A\,C\) for some \(A\in\Gamma\) if and only if
+\(p(C')=A\,p(C)\) for some \(A\in\Gamma\).
+\end{lemma}
+
+\begin{proof}
+If \(C'=A\,C\), then \(p(C')=A\,p(C)\) by equivariance.  Conversely, if
+\(p(C')=A\,p(C)\), then this point lies in the interior of \(C'\) and in the
+interior of \(A\,C\in\mathcal{F}\).  Since distinct cones of \(\mathcal{F}\)
+have disjoint interiors, \(C'=A\,C\).
+\end{proof}
+
+\paragraph{Application to iso-Delaunay domains.}
+In the coordinates \(q\) of the previous sections the lattice \(\ZZ^m\) is
+\(T_{\ZZ}\), and \(\GL(T_{\ZZ})\) is a subgroup of \(\GL_m(\ZZ)\).  The closure
+\(C\) of a full-dimensional iso-Delaunay domain is pointed, since it is
+contained in the cone of positive semidefinite matrices, and its facet
+inequalities are the primitive integral ones produced by
+Algorithm~\ref{Algo_WallInequalities}.  We write \(Q_C\) for the Gram matrix
+of the point \(p(C)\) and call it the interior form of the domain.  The
+full-dimensional iso-Delaunay domains have pairwise disjoint interiors and are
+permuted by \(\GL(T_{\ZZ})\).  Lemma~\ref{lem:canonical_equivalence} with
+\(\Gamma=\GL(T_{\ZZ})\) therefore shows that two such domains are equivalent
+if and only if their interior forms are; this is what makes the equivalence
+test of Section~\ref{sec:equivalence} correct.
+
+\subsection{Construction of an initial form}\label{sec:initial}
 
 It remains to construct a form lying in a full-dimensional iso-Delaunay
 domain.  This is done iteratively.  Fix a positive-definite matrix
@@ -233,71 +360,111 @@ domain.  This is done iteratively.  Fix a positive-definite matrix
 \begin{equation}
   Q=\sum_{u=1}^{m}c_uB_u,
 \end{equation}
-and add sufficiently many positive multiples of \(Q_{\mathrm{ref}}\) to make
+and add sufficiently many copies of \(Q_{\mathrm{ref}}\) to make
 \(Q\) positive definite.  If an arithmetic automorphism of \(Q\) does not fix
-the \(T\)-space pointwise, discard \(Q\) and sample again.
+the \(T\)-space pointwise, discard \(Q\) and sample again.  The automorphisms
+that fix \(T\) pointwise are automorphisms of every form of \(T\); a form with
+more symmetry is special in \(T\), and discarding it is a cheap way to avoid
+forms lying on walls.
 
 The random generation starts with simple forms: the coefficients \(c_u\) are
-sampled from a small interval around zero.  If repeated candidates fail the
-tests below, this interval is progressively enlarged.  The precise rate of
-growth is not part of the mathematical algorithm; its purpose is to explore
-low-complexity forms first without restricting the search to a fixed finite
-set.
+sampled uniformly in \(\{-N,\ldots,N\}\), starting from \(N=2\).  If the
+\(k\)-th candidate fails the tests below, \(N\) is increased by \(k\), so that
+\(N=2+k(k+1)/2\) after \(k\) failures.  The precise rate of growth is not part
+of the mathematical algorithm; its purpose is to explore low-complexity forms
+first without restricting the search to a fixed finite set.
 
 For a form passing this symmetry test, enumerate its Delaunay tessellation.
 This enumeration may be stopped as soon as a Delaunay polytope imposes a
 nonzero linear equality on \(T\).  Such an equality means that \(Q\) lies on a
-proper iso-Delaunay wall rather than in a full-dimensional domain.  If a
-common form \(Q_{\mathrm{common}}\) is prescribed, stop also when a Delaunay
-polytope of \(Q\) is not Delaunay for \(Q_{\mathrm{common}}\).
+proper iso-Delaunay wall rather than in a full-dimensional domain.
 
 Once a tessellation \(D_0\) passes all tests, its wall inequalities are
 computed and Algorithm~\ref{Algo_GeomInterior} supplies the distinguished
 interior form \(Q_0\).  The iterative construction is summarized in
 Algorithm~\ref{Algo_InitialIsoDelaunay}.
 
-\begin{algorithm}\label{Algo_InitialIsoDelaunay}
+\paragraph{A prescribed common form.}
+The enumeration may be restricted to the \emph{star} of a prescribed
+positive-definite form \(G=Q_{\mathrm{common}}\in T\): the set of
+full-dimensional iso-Delaunay domains whose closure contains \(G\).  This is
+used when \(G\) lies on walls, for instance when \(G\) has a non-generic
+Delaunay tessellation.  The seed must then be a domain of the star.  Since
+the domains are cones, the form \(P+sG\) with \(P\) a generic form tends to
+the ray of \(G\) as \(s\to\infty\), and lies in a domain of the star for \(s\)
+large enough.  The algorithm therefore samples \(P\) as above, tests
+\(Q=P+2^kG\) at the \(k\)-th attempt, and accepts a full-dimensional domain
+only if \(G\) belongs to its closure, that is, if \(a(G)\geq 0\) for all its
+wall inequalities \(a\).  This test is made once for the whole domain after
+its Delaunay tessellation has been computed.
+
+\begin{algorithm}
 \KwData{The saturated \(T\)-space with basis \(B_1,\ldots,B_m\), a
 positive-definite form \(Q_{\mathrm{ref}}\in T\), and optionally
-\(Q_{\mathrm{common}}\)}
+a positive-definite form \(G=Q_{\mathrm{common}}\in T\)}
 \KwResult{A Delaunay tessellation \(D_0\) of a full-dimensional
-iso-Delaunay domain and its distinguished interior form \(Q_0\)}
+iso-Delaunay domain, whose closure contains \(G\) if \(G\) is given, and its
+distinguished interior form \(Q_0\)}
+\(k\leftarrow 0\), \(N\leftarrow 2\).\\
 \While{no initial domain has been found}{
-  Choose random integral coefficients \(c_1,\ldots,c_m\) according to the
-  sampling policy described above.\\
+  Choose random integral coefficients \(c_1,\ldots,c_m\) in
+  \(\{-N,\ldots,N\}\).\\
   \(Q\leftarrow\sum_{u=1}^{m}c_uB_u\).\\
   \While{\(Q\) is not positive definite}{
     \(Q\leftarrow Q+Q_{\mathrm{ref}}\).
   }
   \If{some arithmetic automorphism of \(Q\) does not fix \(T\) pointwise}{
-    discard \(Q\) and continue with another sampled form.
+    \(k\leftarrow k+1\), \(N\leftarrow N+k\), and continue with another
+    sampled form.
+  }
+  \If{\(G\) is prescribed}{
+    \(Q\leftarrow Q+2^kG\).
   }
   Enumerate the Delaunay tessellation \(D\) of \(Q\), stopping if a Delaunay
   polytope imposes a nonzero equality on \(T\).\\
-  \If{\(Q_{\mathrm{common}}\) is prescribed}{
-    stop the enumeration also if a Delaunay polytope is not Delaunay for
-    \(Q_{\mathrm{common}}\).
-  }
   \If{the enumeration finishes without stopping}{
     \({\mathcal A}_0\leftarrow\) wall inequalities of \(D\) by
     Algorithm~\ref{Algo_WallInequalities}.\\
-    \(Q_0\leftarrow\) result of Algorithm~\ref{Algo_GeomInterior} applied to
-    \({\mathcal A}_0\).\\
-    \KwRet{\((D,Q_0)\)}
+    \If{\(G\) is not prescribed, or \(a(G)\geq 0\) for all
+    \(a\in{\mathcal A}_0\)}{
+      \(Q_0\leftarrow\) result of Algorithm~\ref{Algo_GeomInterior} applied to
+      \({\mathcal A}_0\).\\
+      \KwRet{\((D,Q_0)\)}
+    }
   }
+  \(k\leftarrow k+1\), \(N\leftarrow N+k\).
 }
 \caption{Iterative construction of an initial iso-Delaunay domain}
+\label{Algo_InitialIsoDelaunay}
 \end{algorithm}
 
 \subsection{Adjacent domains and flips}
 
 The adjacency graph of iso-Delaunay domains is obtained by crossing
-irreducible walls of the current cone.  For each orbit representative of an
+irredundant walls of the current cone.  For each orbit representative of an
 irredundant inequality, the algorithm first computes a point in the relative
 interior of the corresponding facet.  If this point does not represent a
 positive-definite matrix, the wall belongs to the boundary of the positive
 definite cone and no adjacent iso-Delaunay domain is produced.  Otherwise the
-wall is crossed by a \(T\)-flip.
+wall is crossed by a \(T\)-flip.  Testing a single point is enough by the
+following remark.
+
+\begin{remark}\label{rem:facet_pd}
+Let \(X\) be a convex subset of the cone of positive semidefinite matrices.
+All the points of the relative interior of \(X\) lie in the relative interior
+of the same face of that cone, and the faces of the positive semidefinite
+cone are determined by the kernel.  Hence all the points of \(\relint X\)
+have the same rank.  Applied to a facet of an iso-Delaunay cone, either every
+point of its relative interior is positive definite, or the facet lies in the
+boundary of the positive semidefinite cone.
+\end{remark}
+
+When a common form \(G\) is prescribed, a wall is crossed only if \(G\) lies
+on it, that is, if its inequality vanishes at \(G\).  Crossing a wall not
+containing \(G\) would leave the star of \(G\).  Because \(G\) is positive
+definite, the domains of the star form a complete fan around the ray of \(G\)
+modulo the line \(\RR G\), and any two of them are therefore connected by a
+sequence of crossings of walls containing \(G\).
 
 The flip uses the adjacency records stored with the wall inequality to identify
 all Delaunay polytopes that meet at the wall.  These polytopes form
@@ -315,16 +482,21 @@ After the higher facets have been identified modulo the local symmetry group,
 one reconstructs the whole finite orbit description of the new Delaunay
 tessellation and recomputes its facet adjacencies.
 
-\begin{algorithm}\label{Algo_AdjacentIsoDelaunay}
+\begin{algorithm}
 \KwData{An iso-Delaunay domain \(C\), represented by its Delaunay tessellation
-\(D\), an interior form \(Q\), and the wall inequalities of \(C\)}
-\KwResult{The list of positive-definite iso-Delaunay domains adjacent to \(C\)}
+\(D\), an interior form \(Q\), and the wall inequalities of \(C\); optionally a
+common form \(G\)}
+\KwResult{The list of positive-definite iso-Delaunay domains adjacent to \(C\),
+one for each orbit of walls of \(C\) under its stabilizer}
 \({\mathcal N}\leftarrow\emptyset\).\\
 Compute the stabilizer of \(C\) in the arithmetic group preserving \(T\).\\
 Compute orbit representatives of the irredundant walls of \(C\).\\
-\For{each wall representative \(F\)}{
+\For{each wall representative \(F\), with inequality \(a_F\)}{
   compute a point \(q_F\) in the relative interior of \(F\).\\
   \If{\(Q(q_F)\) is not positive definite}{
+    continue to the next wall.
+  }
+  \If{\(G\) is prescribed and \(a_F(G)\neq 0\)}{
     continue to the next wall.
   }
   collect all Delaunay adjacencies producing the wall \(F\).\\
@@ -339,9 +511,10 @@ Compute orbit representatives of the irredundant walls of \(C\).\\
 }
 \KwRet{\({\mathcal N}\)}
 \caption{Adjacent iso-Delaunay domains}
+\label{Algo_AdjacentIsoDelaunay}
 \end{algorithm}
 
-\subsection{Equivalence and graph traversal}
+\subsection{Equivalence and graph traversal}\label{sec:equivalence}
 
 Enumeration is a graph traversal in which each visited vertex is an
 iso-Delaunay domain and each edge is a positive-definite wall crossing.  The
@@ -356,8 +529,14 @@ data required by this traversal are:
         \(T\)-space-preserving integral change of basis sending one interior
         Gram matrix and short-vector family to the other.  Because the matrix
         lattice \(T_{\ZZ}\) is saturated, the induced transformation matrix
-        in the chosen \(T\)-coordinates is integral.
+        in the chosen \(T\)-coordinates is integral.  By
+        Lemma~\ref{lem:canonical_equivalence}, comparing the interior Gram
+        matrices produced by Algorithm~\ref{Algo_GeomInterior} decides the
+        equivalence of the domains.
 \end{itemize}
+When a common form \(G\) is prescribed, the arithmetic group is replaced by
+the stabilizer of \(G\) in it, so that the equivalences preserve the star of
+\(G\).
 The output of the traversal is therefore one representative for each
 iso-Delaunay domain modulo the arithmetic group preserving the \(T\)-space.
 
@@ -369,11 +548,12 @@ maintain a queue of domains still to be processed, compute all neighbours of
 one domain, and insert only those neighbours that are not equivalent to
 previously found domains.
 
-\begin{algorithm}\label{Algo_IsoDelaunayEnumeration}
+\begin{algorithm}
 \KwData{A \(T\)-space with basis \(B_1,\ldots,B_m\), an arithmetic group
 preserving \(T\), and optionally a common Gram matrix \(Q_{\mathrm{common}}\)}
 \KwResult{A set \({\mathcal R}\) of inequivalent full-dimensional
-iso-Delaunay domains in \(T\)}
+iso-Delaunay domains in \(T\), restricted to the star of
+\(Q_{\mathrm{common}}\) if it is given}
 \((D_0,Q_0)\leftarrow\) result of
 Algorithm~\ref{Algo_InitialIsoDelaunay}.\\
 \({\mathcal T}\leftarrow\{(D_0,Q_0)\}\), \({\mathcal R}\leftarrow\emptyset\).\\
@@ -391,6 +571,7 @@ Algorithm~\ref{Algo_InitialIsoDelaunay}.\\
 }
 \KwRet{\({\mathcal R}\)}
 \caption{Enumeration of full-dimensional iso-Delaunay domains}
+\label{Algo_IsoDelaunayEnumeration}
 \end{algorithm}
 
 \section{Finding iso-Delaunay domains with all rays of full rank}
@@ -416,6 +597,12 @@ The desired property is
 \begin{equation}
   \rank(R_i)=n \qquad \text{for every extreme ray } i .
 \end{equation}
+Since \(C\) is contained in the cone of positive semidefinite matrices, each
+\(R_i\) is positive semidefinite, and the property says that every \(R_i\) is
+positive definite.  As \(C\) is the conical hull of its extreme rays, it is
+then equivalent to \(C\setminus\{0\}\) consisting of positive definite forms,
+and also, by Remark~\ref{rem:facet_pd}, to every wall of \(C\) being crossed
+by a flip into another iso-Delaunay domain.
 The search uses the integer objective
 \begin{equation}
   \Phi(C)=\sum_{i=1}^{s} (n-\rank(R_i)).
@@ -424,9 +611,11 @@ Thus \(\Phi(C)=0\) exactly when all extreme rays have full rank.  For each
 visited domain, the inequalities are recomputed, redundancy is removed by
 Clarkson's algorithm, the extreme rays are computed, and the rank defects are
 summed.  This makes the objective independent of any redundant wall
-description used during adjacency generation.
+description used during adjacency generation.  The dual descriptions are the
+dominant cost of the search; the implementation chooses among several dual
+description methods adaptively during the run.
 
-\begin{algorithm}\label{Algo_RankDefect}
+\begin{algorithm}
 \KwData{An iso-Delaunay domain \(C\) with Delaunay tessellation \(D\)}
 \KwResult{The rank-defect score \(\Phi(C)\)}
 Compute the wall inequalities of \(D\) by Algorithm~\ref{Algo_WallInequalities}.\\
@@ -439,6 +628,7 @@ Compute the extreme rays \(r^{(1)},\ldots,r^{(s)}\) of the resulting cone.\\
 }
 \KwRet{\(\Phi\)}
 \caption{Rank-defect objective}
+\label{Algo_RankDefect}
 \end{algorithm}
 
 \subsection{Greedy descent with random escapes}
@@ -450,7 +640,16 @@ graph of adjacent \(L\)-types when the objective improves, and use random walks
 to leave local minima.  In that thesis this strategy was used to find record
 lattice coverings in dimension \(6\).
 
-\begin{algorithm}\label{Algo_FullRankSearch}
+The neighbours of a domain are taken from
+Algorithm~\ref{Algo_AdjacentIsoDelaunay}, that is, one neighbour for each
+orbit of flippable walls under the stabilizer of the domain.  This is enough
+for the greedy step, because \(\Phi\) is invariant under the arithmetic group
+and two walls in the same orbit lead to equivalent neighbours.  For the random
+walk it means that each step chooses uniformly among the orbits of flippable
+walls, which is not the same distribution as choosing uniformly among the
+walls themselves.
+
+\begin{algorithm}
 \KwData{An \(n\)-dimensional \(T\)-space, a random-walk length
 \(N_{\rm walk}\), and an iteration bound \(N_{\rm iter}\)}
 \KwResult{A domain \(C\) with \(\Phi(C)=0\), if one is found within the search
@@ -470,12 +669,16 @@ budget}
     \(\Phi(C')=\phi_{\min}\).\\
     \(C\leftarrow C'\), \(\phi\leftarrow\phi_{\min}\).\\
   }{
-    perform \(N_{\rm walk}\) random adjacency steps from \(C\).\\
-    replace \(C\) by the endpoint and recompute \(\phi=\Phi(C)\).
+    \For{\(j=1,\ldots,N_{\rm walk}\)}{
+      choose uniformly an orbit of flippable walls of \(C\) and replace
+      \(C\) by the domain across a wall of that orbit.
+    }
+    recompute \(\phi=\Phi(C)\).
   }
 }
 \KwRet{\bf fail}
 \caption{Search for an iso-Delaunay domain with full-rank rays}
+\label{Algo_FullRankSearch}
 \end{algorithm}
 
 The output condition is exactly \(\Phi(C)=0\).  In this case every extreme ray
@@ -494,9 +697,145 @@ safety guard.  In some dimensions there may be no domain with \(\Phi=0\), so an
 unconditional search for a zero would not terminate.  The search exploits the
 adjacency graph of iso-Delaunay domains until such a domain is found or the
 chosen computational budget is exhausted.
+This is the case for \(T=\Sym_n(\RR)\) with \(2\leq n\leq 5\).  For \(n=5\), the
+complete classification of the \(L\)-types
+\cite{DutourSikiricGarberSchurmannWaldmann2016} shows that every secondary cone \(C\) decomposes as
+\(C=F(C)+\sum_{i=1}^{h}\RR_{+}v_iv_i^{t}\), where the fundamental face
+\(F(C)\) is the smallest face of \(C\) containing all its extreme rays of
+rank greater than \(1\), and \(\dim C=\dim F(C)+h\).  The fundamental faces
+that occur have dimension at most \(5\), so each of the \(222\)
+full-dimensional domains, of dimension \(15\), has at least \(10\) extreme
+rays of rank \(1\).  For \(n=4\) there are three full-dimensional domains
+\cite{Voronoi1908}, with \(10\), \(9\) and \(9\) extreme rays of rank
+\(1\), and for \(n=2,3\) the only full-dimensional domain, Voronoi's
+principal domain, has all its extreme rays of rank \(1\).
 
-\nocite{DutourSikiricPolyhedralCommon}
+\section{Iso-Delaunay domains in dimension 6 with full-rank rays}
+\label{sec:dim6}
+
+We ran Algorithm~\ref{Algo_FullRankSearch} for \(T=\Sym_6(\RR)\), the
+classical case of Voronoi's second reduction, where the iso-Delaunay domains
+are the \(L\)-type domains.  Here \(m=21\), and the basis \(B_1,\ldots,B_{21}\)
+consists of the matrices \(E_{ii}\) and \(E_{ij}+E_{ji}\) for \(i<j\), in the
+order \((1,1),(1,2),\ldots,(1,6),(2,2),\ldots,(6,6)\), so that \(q_{ij}\) is
+the \((i,j)\) entry of \(Q(q)\).
+The full-dimensional \(L\)-type domains correspond to the combinatorial types
+of primitive parallelohedra \cite{Voronoi1908}.  In dimension \(6\), Baburin
+and Engel enumerated several hundred million of these types without
+completing the enumeration \cite{BaburinEngel2013}, so the complete list of
+\(L\)-type domains is not known.  Our search does not attempt it: it looks
+only for the domains all of whose extreme rays are positive definite.
+\todo{give the parameters \(N_{\rm walk}\), \(N_{\rm iter}\), the number of
+restarts and the running time.}
+
+\begin{theorem}\label{thm:dim6}
+There exist \(21\)-dimensional \(L\)-type domains of positive definite
+quadratic forms in six variables all of whose extreme rays are positive
+definite forms.  The search found \(1472\) of them, pairwise inequivalent
+under \(\GL_6(\ZZ)\).  Their number of facets ranges from \(24\) to \(62\),
+and their number of extreme rays from \(47\) to \(210010\), with median
+\(1671.5\).
+\end{theorem}
+
+\paragraph{The data.}
+The search saved \(1472\) Gram matrices.  For each of them we recomputed,
+with the programs of \cite{DutourSikiricPolyhedralCommon}, its Delaunay
+tessellation, the iso-Delaunay domain containing it, the irredundant facets
+of the domain and its extreme rays.  All \(1472\) domains have \(\Phi=0\).
+
+This recomputation has to take the symmetries of the saved form into
+account.  The Delaunay tessellation of a form \(Q\) is stored as one Delaunay
+polytope per orbit of the stabilizer of \(Q\) in \(\GL_6(\ZZ)\), and the walls
+of the other polytopes are the images of the walls of these representatives
+under the stabilizer.  The element \(-1\) acts trivially on \(T\), but a
+larger stabilizer does not, so the list of walls has to be closed under it
+before the redundancy is removed; otherwise the cone obtained is not the
+iso-Delaunay domain.  For \(1457\) of the saved forms the stabilizer is
+\(\{\pm 1\}\), and for the other \(15\) it has order \(4\).  The
+enumeration of Section~1 is not concerned: it computes one Delaunay
+tessellation, for a form without accidental symmetry, and obtains the other
+tessellations by flips, so that its lists of Delaunay polytopes are never
+reduced by the stabilizer of a later domain.
+
+The \(1472\) domains are pairwise inequivalent under \(\GL_6(\ZZ)\).  Since
+all extreme rays of a domain \(C\) are positive definite, the primitive
+integral extreme rays are known, and their sum \(R_C\) is a point in the
+interior of \(C\).  The point \(R_C\) is equivariant under \(\GL_6(\ZZ)\), and
+the proof of Lemma~\ref{lem:canonical_equivalence} uses only these two
+properties of \(p(C)\), so two domains are equivalent if and only if their
+points \(R_C\) are.  The \(1472\) forms \(R_C\) have pairwise distinct
+canonical forms under \(\GL_6(\ZZ)\), computed with
+\cite{DutourSikiricPolyhedralCommon}.
+
+\paragraph{The smallest example.}
+The domain with the fewest facets and rays has \(24\) facets and \(47\)
+extreme rays.  We give it in the basis of \(\ZZ^6\) in which the Gram matrix
+saved by the search is Minkowski reduced, computed with
+\cite{DutourSikiricPolyhedralCommon}.  In this basis the saved Gram matrix,
+which lies in the interior of the domain, is
+\begin{equation}
+Q_0=\begin{pmatrix}
+ 130 &   61 &  -44 &  -36 &  -50 &  -18\\
+  61 &  131 &  -36 &   26 &  -62 &   17\\
+ -44 &  -36 &  153 &  -55 &  -33 &   67\\
+ -36 &   26 &  -55 &  160 &   33 &   34\\
+ -50 &  -62 &  -33 &   33 &  176 &  -83\\
+ -18 &   17 &   67 &   34 &  -83 &  183
+\end{pmatrix},
+\end{equation}
+the facet inequalities have coefficients in \(\{-2,\ldots,2\}\), and the
+extreme rays have coordinates of absolute value at most \(26\).  No integral
+form in the interior of the domain has smaller coefficients in this basis:
+the linear program minimizing the largest absolute value of a coefficient,
+subject to \(a(q)\geq 1\) for all facets \(a\), already has the optimal
+value \(183\).
+All \(47\) extreme rays are positive definite forms, with determinants
+ranging from \(24\) to \(21208743\) for the primitive integral
+representatives.  The facets and the extreme rays are listed in
+Appendix~\ref{app:example}.
+
+\section*{Acknowledgments}
+
+The author thanks Barak Weiss for suggesting the question of the existence of
+iso-Delaunay domains all of whose extreme rays have full rank.
+
+\section*{Tool and computational resource disclosure}
+
+This section follows the recommendation of the Leiden Declaration on
+Artificial Intelligence and Mathematics \cite{LeidenDeclaration2026}.
+
+\paragraph{Mathematical software.}
+The algorithms of Sections~1 and~2 are implemented in the C++ programs of
+\cite{DutourSikiricPolyhedralCommon}, with no external library for linear
+programming or polyhedral computations: the exact simplex method and
+Clarkson's redundancy removal are implemented there.  The dual descriptions
+of Algorithm~\ref{Algo_RankDefect} are computed by one of three methods,
+chosen adaptively during the run: beneath-and-beyond, and templated C++
+reimplementations, within \cite{DutourSikiricPolyhedralCommon}, of the double
+description method and of the reverse search of lrs \cite{Avis2000}.
+The data of Section~\ref{sec:dim6} were processed with Python scripts calling
+the programs of \cite{DutourSikiricPolyhedralCommon}, including its
+canonical form of positive definite forms under \(\GL_n(\ZZ)\).
+
+\paragraph{Large language models.}
+The AI assistant Claude (Claude Opus 5.5, by Anthropic), through the Claude
+Code interface, assisted with this version of the manuscript in November
+2026: it compared the description of the algorithms with their implementation
+in \cite{DutourSikiricPolyhedralCommon} and drafted the resulting revisions,
+drafted Section~\ref{sec:dim6} and Appendix~\ref{app:example}, and
+recomputed the data of Section~\ref{sec:dim6}, which led to the correction
+of the analysis program described there.  The search itself was performed by
+the programs of \cite{DutourSikiricPolyhedralCommon}.
+The author has checked the mathematical content, the proofs and the
+computations, and takes full responsibility for the correctness of the paper
+and of its citations.
+
 \bibliographystyle{plain}
 \bibliography{references}
+
+\appendix
+\section{The smallest domain of Theorem~\ref{thm:dim6}}\label{app:example}
+
+\input{example_101}
 
 \end{document}
