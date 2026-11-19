@@ -54,16 +54,17 @@ same Delaunay tessellation form a relatively open polyhedral cone, an
 iso-Delaunay domain, also called a \(T\)-secondary cone
 \cite{DutourSikiriSchurmannVallentin2008}.  For \(T=\Sym_n(\RR)\) these are
 the \(L\)-type domains of Voronoi's second reduction theory
-\cite{Voronoi1908}, and the full-dimensional ones correspond to the
-combinatorial types of primitive parallelohedra.
+\cite{Voronoi1908}, and each full-dimensional one determines a combinatorial
+type of primitive parallelohedra.
 
 Several programs enumerate iso-Delaunay domains.  Some treat only the full
 space \(T=\Sym_n(\RR)\): the secondary cone cruiser \texttt{scc} of
 Sch\"urmann and Vallentin \cite{SchurmannVallentinSCC}, which was one of the
 implementations used for the complete classification in dimension \(5\)
 \cite{DutourSikiricGarberSchurmannWaldmann2016}, and the program of Baburin
-and Engel, who enumerated several hundred million \(L\)-types in dimension
-\(6\) without completing the enumeration \cite{BaburinEngel2013}.  Others
+and Engel, who found \(567\,613\,632\) combinatorial types of primitive
+parallelohedra in dimension \(6\), a lower bound since their enumeration is
+not complete \cite{BaburinEngel2013}.  Others
 treat a general \(T\)-space: the GAP package \texttt{polyhedral}
 \cite{DutourSikiricGAPpolyhedral} and its C++ version
 \cite{DutourSikiricPolyhedralCommon}, which is the one described and used
@@ -71,7 +72,10 @@ here, and the Julia code of Miebach \cite{Miebach2025}, who used it for the
 sphere coverings of Eisenstein, Gaussian and Hurwitzian lattices.
 
 We consider the following question: is there a full-dimensional iso-Delaunay
-domain all of whose extreme rays are positive definite forms?  In the
+domain all of whose extreme rays are positive definite forms?  The extreme
+rays of the \(L\)-type domains include the rigid forms, whose \(L\)-type
+domain is a single ray, and the question was raised in the study of the
+six-dimensional rigid forms \cite{DutourVallentin2005}.  In the
 classical case \(T=\Sym_n(\RR)\) the extreme rays of an \(L\)-type domain often
 include forms of rank \(1\), and for \(2\leq n\leq 5\) every full-dimensional
 domain has such a ray.  We show that the answer is positive for \(n=6\).
@@ -84,12 +88,12 @@ definite.
 
 In Section~\ref{sec:enum} we describe the enumeration of the iso-Delaunay
 domains of a space \(T\), together with a canonical interior point of a
-polyhedral cone, which is of independent interest.  In
-Section~\ref{sec:search} we describe a randomized search for a domain all of
-whose extreme rays have full rank.  Section~\ref{sec:tests} gives test cases
-for the enumeration, over the Hermitian forms of imaginary quadratic rings, and
-in Section~\ref{sec:dim6} we report the outcome of the search for \(n=6\):
-\(1472\) pairwise inequivalent such domains.
+polyhedral cone, which is of independent interest.  Section~\ref{sec:tests}
+gives test cases for the enumeration, over the Hermitian forms of imaginary
+quadratic rings.  In Section~\ref{sec:search} we describe a randomized search
+for a domain all of whose extreme rays have full rank, and in
+Section~\ref{sec:dim6} we report its outcome for \(n=6\): \(1472\)
+pairwise inequivalent such domains.
 
 \section{Enumeration of iso-Delaunay domains}\label{sec:enum}
 
@@ -170,8 +174,8 @@ the basis is the linear condition
   \right) \geq 0 .
 \end{equation}
 When \(w\) is itself a vertex of \(P\) the left-hand side must vanish, which
-is a linear equality on \(T\); it is nonzero exactly when \(P\) cannot remain
-a Delaunay polytope on an open subset of \(T\).
+is a linear equality on \(T\); this linear form is nonzero exactly when \(P\)
+cannot remain a Delaunay polytope on an open subset of \(T\).
 
 For an actual facet adjacency \(P,P'\), any vertex of \(P'\setminus P\) gives
 the same inequality up to a positive scalar factor.  The scalar is
@@ -309,9 +313,11 @@ in coordinates of \(W\).  By Lemma~\ref{lem:positive_t} this cone is pointed
 and the point \((t_0,q_0)\) returned by the recursion has \(t_0>0\); the
 algorithm returns \(q_0/t_0\).  This is a point of the relative interior of
 \(F\), hence an interior point of \(C\).  The recursion terminates since
-\(\dim W<\dim H<1+m\) whenever \(F\) is not a single point; in the
-implementation the case \(\dim W=1\), where \(K\cap W\) is the single ray over
-\(F\), returns the solution of the linear program directly.
+\(\dim W<\dim H<1+m\).  Indeed the objective is not constant on \(S\), which
+contains \(q+\lambda q'\) for \(q\in S\), \(q'\) in the interior of \(C\) and
+\(\lambda\geq 0\); hence \(F\) is a proper face of \(S\), at least one
+inequality \(a_i(q)\geq 1\) is tight on \(F\), and the corresponding
+inequality \(a_i(q)-t\geq 0\) is an equality on \(K\cap H\).
 
 \paragraph{Equivariance.}
 This construction uses only linear programming and linear algebra; no full
@@ -342,9 +348,6 @@ Solve the linear program minimizing \(\sum_i(a_i(q)-1)\) subject to
 \(H\leftarrow\{(t,q):\sum_i a_i(q)-(N+\mu)t=0\}\).\\
 \(W\leftarrow\) the subspace of \(H\) cut out by the inequalities that are
 equalities on \(K\cap H\).\\
-\If{\(\dim W=1\)}{
-  \KwRet{\(q^*\)}
-}
 Express the inequalities that are not identically zero on \(W\) in a basis of
 \(W\).\\
 \((t_0,q_0)\leftarrow\) result of Algorithm~\ref{Algo_GeomInterior} applied
@@ -497,8 +500,10 @@ When a common form \(G\) is prescribed, a wall is crossed only if \(G\) lies
 on it, that is, if its inequality vanishes at \(G\).  Crossing a wall not
 containing \(G\) would leave the star of \(G\).  Because \(G\) is positive
 definite, the domains of the star form a complete fan around the ray of \(G\)
-modulo the line \(\RR G\), and any two of them are therefore connected by a
-sequence of crossings of walls containing \(G\).
+modulo the line \(\RR G\), since the iso-Delaunay domains form a locally
+finite decomposition of the positive definite cone
+\cite{DutourSikiriSchurmannVallentin2008}, and any two of them are therefore
+connected by a sequence of crossings of walls containing \(G\).
 
 The flip uses the adjacency records stored with the wall inequality to identify
 all Delaunay polytopes that meet at the wall.  These polytopes form
@@ -633,6 +638,78 @@ Algorithm~\ref{Algo_InitialIsoDelaunay}.\\
 \label{Algo_IsoDelaunayEnumeration}
 \end{algorithm}
 
+\section{Test cases: Hermitian forms over imaginary quadratic rings}
+\label{sec:tests}
+
+The enumeration of Section~\ref{sec:enum} applies to any \(T\)-space, and the
+spaces of Hermitian forms over the ring of integers of an imaginary quadratic
+field give test cases in which the arithmetic group is not \(\GL_n(\ZZ)\).
+These spaces and their perfect forms are studied in
+\cite{DutourSikiricGanglGunnellsHankeSchurmannYasaki2016}, whose model we
+use.
+
+\paragraph{The \(T\)-space.}
+Let \(R=\ZZ[\alpha]\) be the ring of integers of an imaginary quadratic field,
+with \(\alpha^2-s\alpha+p=0\), \(s\in\{0,1\}\); the Gaussian integers
+\(\ZZ[i]\) have \((s,p)=(0,1)\) and the Eisenstein integers \((s,p)=(1,1)\).
+We identify \(R^n\) with \(\ZZ^{2n}\) by writing \(x=a+\alpha b\) with
+\(a,b\in\ZZ^n\).  A Hermitian form \(H\) on \(R^n\) defines the real quadratic
+form \((a,b)\mapsto H(x,x)\) on \(\ZZ^{2n}\), and \(T\subset\Sym_{2n}(\RR)\)
+is the space of these forms, of dimension \(n^2\); its explicit description
+as a space of symmetric \(2n\times 2n\) matrices is given in
+\cite[Section~6.1]{DutourSikiricGanglGunnellsHankeSchurmannYasaki2016}.  Let
+\(M_\alpha\in\GL_{2n}(\ZZ)\) be the matrix of the multiplication by
+\(\alpha\).  Since \(H(\alpha x,\alpha x)=p\,H(x,x)\), every \(A\in T\)
+satisfies \(M_\alpha^tAM_\alpha=pA\).
+
+\paragraph{The groups.}
+The group \(\GL_n(R)\) is the group of the matrices of \(\GL_{2n}(\ZZ)\) that
+commute with \(M_\alpha\); it preserves \(T\).  The Galois conjugation
+\(\sigma\colon a+\alpha b\mapsto a+\bar\alpha b\) is also a matrix of
+\(\GL_{2n}(\ZZ)\) preserving \(T\), which normalizes \(\GL_n(R)\), and we also
+consider the group
+\(K_n(R)=\GL_n(R)\cup\GL_n(R)\,\sigma\).  The stabilizers and the equivalences
+of positive definite forms in \(\GL_n(R)\) are computed by the algorithm of
+Plesken and Souvignier \cite{PleskenSouvignier1997} applied to the pair of
+forms \(A\) and \(AM_\alpha\): an element of \(\GL_{2n}(\ZZ)\) preserving both
+commutes with \(M_\alpha\).  The elements of the coset \(\GL_n(R)\,\sigma\) do
+not commute with \(M_\alpha\) and are reduced to
+\(\GL_n(R)\): the element \(g\sigma\) maps \(A_1\) to \(A_2\) if and only if
+\(g\) maps \(\sigma A_1\sigma^t\) to \(A_2\).  The group \(K_n(R)\) can also be
+obtained without this reduction, as the group of all the elements of
+\(\GL_{2n}(\ZZ)\) preserving \(T\), and the two computations have to agree.
+
+Table~\ref{tab:tests} gives the numbers of inequivalent full-dimensional
+iso-Delaunay domains for \(n=2\) and the first ten discriminants, and for
+\(n=3\) over the Gaussian and the Eisenstein integers, with the running
+times of the enumeration.  For \(n=3\) over \(\ZZ[i]\), the
+computation of \(K_3(\ZZ[i])\) as the group of all the elements preserving
+\(T\) gives the same \(103\) domains.
+
+\begin{table}[ht]
+\caption{Number of inequivalent full-dimensional iso-Delaunay domains of
+Hermitian forms over the ring of integers of \(\QQ(\sqrt{d})\), and the
+wall-clock time of their enumeration in seconds, on a single core of an
+Apple M4 Max.}
+\label{tab:tests}
+\begin{tabular}{rrrrrr}
+\(n\) & \(d\) & \(\GL_n(R)\) & time (s) & \(K_n(R)\) & time (s)\\
+\hline
+\(2\) & \(-3\) & \(1\) & \(0.06\) & \(1\) & \(0.02\)\\
+\(2\) & \(-4\) & \(1\) & \(0.03\) & \(1\) & \(0.03\)\\
+\(2\) & \(-7\) & \(16\) & \(0.06\) & \(11\) & \(0.05\)\\
+\(2\) & \(-8\) & \(5\) & \(0.04\) & \(5\) & \(0.04\)\\
+\(2\) & \(-11\) & \(58\) & \(0.16\) & \(35\) & \(0.10\)\\
+\(2\) & \(-15\) & \(127\) & \(0.32\) & \(74\) & \(0.20\)\\
+\(2\) & \(-19\) & \(198\) & \(0.52\) & \(112\) & \(0.31\)\\
+\(2\) & \(-20\) & \(61\) & \(0.18\) & \(43\) & \(0.14\)\\
+\(2\) & \(-23\) & \(343\) & \(0.90\) & \(190\) & \(0.53\)\\
+\(2\) & \(-24\) & \(86\) & \(0.26\) & \(61\) & \(0.22\)\\
+\(3\) & \(-3\) & \(23413\) & \(1061\) & \(11832\) & \(401\)\\
+\(3\) & \(-4\) & \(206\) & \(8.9\) & \(103\) & \(4.9\)\\
+\end{tabular}
+\end{table}
+
 \section{Finding iso-Delaunay domains with all rays of full rank}\label{sec:search}
 
 The following search is more targeted than full enumeration.  Its purpose is to
@@ -660,8 +737,8 @@ Since \(C\) is contained in the cone of positive semidefinite matrices, each
 \(R_i\) is positive semidefinite, and the property says that every \(R_i\) is
 positive definite.  As \(C\) is the conical hull of its extreme rays, it is
 then equivalent to \(C\setminus\{0\}\) consisting of positive definite forms,
-and also, by Remark~\ref{rem:facet_pd}, to every wall of \(C\) being crossed
-by a flip into another iso-Delaunay domain.
+and it implies, by Remark~\ref{rem:facet_pd}, that every wall of \(C\) is
+crossed by a flip into another iso-Delaunay domain.
 The search uses the integer objective
 \begin{equation}
   \Phi(C)=\sum_{i=1}^{s} (n-\rank(R_i)).
@@ -673,6 +750,23 @@ summed.  This makes the objective independent of any redundant wall
 description used during adjacency generation.  The dual descriptions are the
 dominant cost of the search; the implementation chooses among several dual
 description methods adaptively during the run.
+
+\begin{remark}\label{rem:small_n}
+For \(T=\Sym_n(\RR)\) with \(2\leq n\leq 5\), no domain has
+\(\Phi=0\).  For \(n=5\), the
+complete classification of the \(L\)-types
+\cite{DutourSikiricGarberSchurmannWaldmann2016} shows that every secondary cone \(C\) decomposes as
+\(C=F(C)+\sum_{i=1}^{h}\RR_{+}v_iv_i^{t}\), where the fundamental face
+\(F(C)\) is the smallest face of \(C\) containing all its extreme rays of
+rank greater than \(1\), and \(\dim C=\dim F(C)+h\).  The fundamental faces
+that occur have dimension at most \(5\), so each of the \(222\)
+full-dimensional domains, of dimension \(15\), has at least \(10\) extreme
+rays of rank \(1\).  For \(n=4\) there are three full-dimensional domains
+\cite{Voronoi1908}, with \(10\), \(9\) and \(9\) extreme rays of rank
+\(1\), and for \(n=2,3\) the only full-dimensional domain, Voronoi's
+principal domain, has all its extreme rays of rank \(1\).
+\end{remark}
+
 
 \begin{algorithm}
 \KwData{An iso-Delaunay domain \(C\) with Delaunay tessellation \(D\)}
@@ -752,90 +846,11 @@ The search is controlled by the following parameters:
 \end{itemize}
 
 The iteration cap is part of the mathematical design of the search, not only a
-safety guard.  In some dimensions there may be no domain with \(\Phi=0\), so an
+safety guard.  In some dimensions there is no domain with \(\Phi=0\), as
+Remark~\ref{rem:small_n} shows, so an
 unconditional search for a zero would not terminate.  The search exploits the
 adjacency graph of iso-Delaunay domains until such a domain is found or the
 chosen computational budget is exhausted.
-This is the case for \(T=\Sym_n(\RR)\) with \(2\leq n\leq 5\).  For \(n=5\), the
-complete classification of the \(L\)-types
-\cite{DutourSikiricGarberSchurmannWaldmann2016} shows that every secondary cone \(C\) decomposes as
-\(C=F(C)+\sum_{i=1}^{h}\RR_{+}v_iv_i^{t}\), where the fundamental face
-\(F(C)\) is the smallest face of \(C\) containing all its extreme rays of
-rank greater than \(1\), and \(\dim C=\dim F(C)+h\).  The fundamental faces
-that occur have dimension at most \(5\), so each of the \(222\)
-full-dimensional domains, of dimension \(15\), has at least \(10\) extreme
-rays of rank \(1\).  For \(n=4\) there are three full-dimensional domains
-\cite{Voronoi1908}, with \(10\), \(9\) and \(9\) extreme rays of rank
-\(1\), and for \(n=2,3\) the only full-dimensional domain, Voronoi's
-principal domain, has all its extreme rays of rank \(1\).
-
-\section{Test cases: Hermitian forms over imaginary quadratic rings}
-\label{sec:tests}
-
-The enumeration of Section~\ref{sec:enum} applies to any \(T\)-space, and the
-spaces of Hermitian forms over the ring of integers of an imaginary quadratic
-field give test cases in which the arithmetic group is not \(\GL_n(\ZZ)\).
-
-\paragraph{The \(T\)-space.}
-Let \(R=\ZZ[\alpha]\) be the ring of integers of an imaginary quadratic field,
-with \(\alpha^2-s\alpha+p=0\), \(s\in\{0,1\}\); the Gaussian integers
-\(\ZZ[i]\) have \((s,p)=(0,1)\) and the Eisenstein integers \((s,p)=(1,1)\).
-We identify \(R^n\) with \(\ZZ^{2n}\) by writing \(x=a+\alpha b\) with
-\(a,b\in\ZZ^n\).  A Hermitian form \(H\) on \(R^n\) defines the real quadratic
-form \((a,b)\mapsto H(x,x)\) on \(\ZZ^{2n}\), and \(T\subset\Sym_{2n}(\RR)\)
-is the space of these forms.  It has dimension \(n^2\).  Let
-\(C\in\GL_{2n}(\ZZ)\) be the matrix of the multiplication by \(\alpha\).
-Since \(H(\alpha x,\alpha x)=p\,H(x,x)\), every \(A\in T\) satisfies
-\(C^tAC=pA\), and conversely the symmetric matrices satisfying this relation
-are exactly those of \(T\).
-
-\paragraph{The groups.}
-The group \(\GL_n(R)\) is the group of the matrices of \(\GL_{2n}(\ZZ)\) that
-commute with \(C\); it preserves \(T\).  The Galois conjugation
-\(\sigma\colon a+\alpha b\mapsto a+\bar\alpha b\) is also a matrix of
-\(\GL_{2n}(\ZZ)\) preserving \(T\), which normalizes \(\GL_n(R)\), and we also
-consider the group
-\(K_n(R)=\GL_n(R)\cup\GL_n(R)\,\sigma\).  The stabilizers and the equivalences
-of positive definite forms in \(\GL_n(R)\) are computed by the algorithm of
-Plesken and Souvignier applied to the pair of forms \(A\) and \(AC\): an
-element of \(\GL_{2n}(\ZZ)\) preserving both commutes with \(C\).  The elements
-of the coset \(\GL_n(R)\,\sigma\) do not commute with \(C\) and are reduced to
-\(\GL_n(R)\): the element \(g\sigma\) maps \(A_1\) to \(A_2\) if and only if
-\(g\) maps \(\sigma A_1\sigma^t\) to \(A_2\).  The group \(K_n(R)\) can also be
-obtained without this reduction, as the group of all the elements of
-\(\GL_{2n}(\ZZ)\) preserving \(T\), and the two computations have to agree.
-
-\paragraph{Results.}
-Table~\ref{tab:tests} gives the numbers of inequivalent full-dimensional
-iso-Delaunay domains for \(n=2\) and the first ten discriminants, which are
-checked by the test suite of \cite{DutourSikiricPolyhedralCommon}, and for
-\(n=3\) over the Gaussian and the Eisenstein integers, with the running
-times of the enumeration on a single core.  For \(n=3\) over \(\ZZ[i]\), the
-computation of \(K_3(\ZZ[i])\) as the group of all the elements preserving
-\(T\) gives the same \(103\) domains.
-
-\begin{table}[ht]
-\caption{Number of inequivalent full-dimensional iso-Delaunay domains of
-Hermitian forms over the ring of integers of \(\QQ(\sqrt{d})\), and the
-running time of their enumeration in seconds, on a single core.}
-\label{tab:tests}
-\begin{tabular}{rrrrrr}
-\(n\) & \(d\) & \(\GL_n(R)\) & time (s) & \(K_n(R)\) & time (s)\\
-\hline
-\(2\) & \(-3\) & \(1\) & \(0.06\) & \(1\) & \(0.02\)\\
-\(2\) & \(-4\) & \(1\) & \(0.03\) & \(1\) & \(0.03\)\\
-\(2\) & \(-7\) & \(16\) & \(0.06\) & \(11\) & \(0.05\)\\
-\(2\) & \(-8\) & \(5\) & \(0.04\) & \(5\) & \(0.04\)\\
-\(2\) & \(-11\) & \(58\) & \(0.16\) & \(35\) & \(0.10\)\\
-\(2\) & \(-15\) & \(127\) & \(0.32\) & \(74\) & \(0.20\)\\
-\(2\) & \(-19\) & \(198\) & \(0.52\) & \(112\) & \(0.31\)\\
-\(2\) & \(-20\) & \(61\) & \(0.18\) & \(43\) & \(0.14\)\\
-\(2\) & \(-23\) & \(343\) & \(0.90\) & \(190\) & \(0.53\)\\
-\(2\) & \(-24\) & \(86\) & \(0.26\) & \(61\) & \(0.22\)\\
-\(3\) & \(-3\) & \(23413\) & \(1061\) & \(11832\) & \(401\)\\
-\(3\) & \(-4\) & \(206\) & \(8.9\) & \(103\) & \(4.9\)\\
-\end{tabular}
-\end{table}
 
 \section{Iso-Delaunay domains in dimension 6 with full-rank rays}
 \label{sec:dim6}
@@ -846,11 +861,11 @@ are the \(L\)-type domains.  Here \(m=21\), and the basis \(B_1,\ldots,B_{21}\)
 consists of the matrices \(E_{ii}\) and \(E_{ij}+E_{ji}\) for \(i<j\), in the
 order \((1,1),(1,2),\ldots,(1,6),(2,2),\ldots,(6,6)\), so that \(q_{ij}\) is
 the \((i,j)\) entry of \(Q(q)\).
-The full-dimensional \(L\)-type domains correspond to the combinatorial types
-of primitive parallelohedra \cite{Voronoi1908}.  In dimension \(6\), Baburin
-and Engel enumerated several hundred million of these types without
-completing the enumeration \cite{BaburinEngel2013}, so the complete list of
-\(L\)-type domains is not known.  Our search does not attempt it: it looks
+Each full-dimensional \(L\)-type domain determines a combinatorial type of
+primitive parallelohedra \cite{Voronoi1908}.  In dimension \(6\), Baburin
+and Engel found \(567\,613\,632\) of these types without completing the
+enumeration \cite{BaburinEngel2013}, so the complete list of \(L\)-type
+domains is not known.  Our search does not attempt it: it looks
 only for the domains all of whose extreme rays are positive definite.
 The search was run with \(N_{\rm walk}=50\) and \(N_{\rm iter}=200\).
 
@@ -859,8 +874,7 @@ There exist \(21\)-dimensional \(L\)-type domains of positive definite
 quadratic forms in six variables all of whose extreme rays are positive
 definite forms.  The search found \(1472\) of them, pairwise inequivalent
 under \(\GL_6(\ZZ)\).  Their number of facets ranges from \(24\) to \(62\),
-and their number of extreme rays from \(47\) to \(210010\), with median
-\(1671.5\).
+and their number of extreme rays from \(47\) to \(210010\).
 \end{theorem}
 
 \paragraph{The data.}
@@ -920,6 +934,12 @@ ranging from \(24\) to \(21208743\) for the primitive integral
 representatives.  The facets and the extreme rays are listed in
 Appendix~\ref{app:example}.
 
+\section*{Data availability}
+
+The \(1472\) domains of Theorem~\ref{thm:dim6} are available on Zenodo
+\cite{DutourSikiricZenodo2026}: for each of them a Gram matrix in its
+interior and its facets, from which the extreme rays can be recomputed.
+
 \section*{Acknowledgments}
 
 The author thanks Barak Weiss for suggesting the question of the existence of
@@ -936,9 +956,11 @@ The algorithms of Sections~\ref{sec:enum} and~\ref{sec:search} are implemented i
 programming or polyhedral computations: the exact simplex method and
 Clarkson's redundancy removal are implemented there.  The dual description
 is computed in \cite{DutourSikiricPolyhedralCommon} by using the classical
-methods of reverse search, normaliz, double description, beneath-and-beyond
-and primal-dual, as well as the recursive adjacency decomposition method
-\cite{DutourSikiricBirkhoffF4H4}.
+methods of reverse search \cite{AvisFukuda1992}, Normaliz
+\cite{BrunsIchim2010}, double description
+\cite{MotzkinRaiffaThompsonThrall1953}, beneath-and-beyond \cite{Joswig2003}
+and primal-dual \cite{BremnerFukudaMarzetta1998}, as well as the recursive
+adjacency decomposition method \cite{DutourSikiricBirkhoffF4H4}.
 The data of Section~\ref{sec:dim6} were processed with Python scripts calling
 the programs of \cite{DutourSikiricPolyhedralCommon}, including its
 canonical form of positive definite forms under \(\GL_n(\ZZ)\).
