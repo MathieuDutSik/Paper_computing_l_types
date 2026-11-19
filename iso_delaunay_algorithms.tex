@@ -809,33 +809,31 @@ obtained without this reduction, as the group of all the elements of
 Table~\ref{tab:tests} gives the numbers of inequivalent full-dimensional
 iso-Delaunay domains for \(n=2\) and the first ten discriminants, which are
 checked by the test suite of \cite{DutourSikiricPolyhedralCommon}, and for
-\(n=3\) over the Gaussian and the Eisenstein integers.  For \(n=3\) over
-\(\ZZ[i]\) the enumeration takes \(9\) seconds for \(\GL_3(\ZZ[i])\) and
-\(5\) seconds for \(K_3(\ZZ[i])\), and the computation of \(K_3(\ZZ[i])\)
-as the group of all the elements preserving \(T\) gives the same \(103\)
-domains.  Over the Eisenstein integers \(\ZZ[\omega]\) it takes \(18\)
-minutes for \(\GL_3(\ZZ[\omega])\) and \(7\) minutes for
-\(K_3(\ZZ[\omega])\), on a single core.
+\(n=3\) over the Gaussian and the Eisenstein integers, with the running
+times of the enumeration on a single core.  For \(n=3\) over \(\ZZ[i]\), the
+computation of \(K_3(\ZZ[i])\) as the group of all the elements preserving
+\(T\) gives the same \(103\) domains.
 
 \begin{table}[ht]
 \caption{Number of inequivalent full-dimensional iso-Delaunay domains of
-Hermitian forms over the ring of integers of \(\QQ(\sqrt{d})\).}
+Hermitian forms over the ring of integers of \(\QQ(\sqrt{d})\), and the
+running time of their enumeration in seconds, on a single core.}
 \label{tab:tests}
-\begin{tabular}{rrrr}
-\(n\) & \(d\) & \(\GL_n(R)\) & \(K_n(R)\)\\
+\begin{tabular}{rrrrrr}
+\(n\) & \(d\) & \(\GL_n(R)\) & time (s) & \(K_n(R)\) & time (s)\\
 \hline
-\(2\) & \(-3\) & \(1\) & \(1\)\\
-\(2\) & \(-4\) & \(1\) & \(1\)\\
-\(2\) & \(-7\) & \(16\) & \(11\)\\
-\(2\) & \(-8\) & \(5\) & \(5\)\\
-\(2\) & \(-11\) & \(58\) & \(35\)\\
-\(2\) & \(-15\) & \(127\) & \(74\)\\
-\(2\) & \(-19\) & \(198\) & \(112\)\\
-\(2\) & \(-20\) & \(61\) & \(43\)\\
-\(2\) & \(-23\) & \(343\) & \(190\)\\
-\(2\) & \(-24\) & \(86\) & \(61\)\\
-\(3\) & \(-3\) & \(23413\) & \(11832\)\\
-\(3\) & \(-4\) & \(206\) & \(103\)\\
+\(2\) & \(-3\) & \(1\) & \(0.06\) & \(1\) & \(0.02\)\\
+\(2\) & \(-4\) & \(1\) & \(0.03\) & \(1\) & \(0.03\)\\
+\(2\) & \(-7\) & \(16\) & \(0.06\) & \(11\) & \(0.05\)\\
+\(2\) & \(-8\) & \(5\) & \(0.04\) & \(5\) & \(0.04\)\\
+\(2\) & \(-11\) & \(58\) & \(0.16\) & \(35\) & \(0.10\)\\
+\(2\) & \(-15\) & \(127\) & \(0.32\) & \(74\) & \(0.20\)\\
+\(2\) & \(-19\) & \(198\) & \(0.52\) & \(112\) & \(0.31\)\\
+\(2\) & \(-20\) & \(61\) & \(0.18\) & \(43\) & \(0.14\)\\
+\(2\) & \(-23\) & \(343\) & \(0.90\) & \(190\) & \(0.53\)\\
+\(2\) & \(-24\) & \(86\) & \(0.26\) & \(61\) & \(0.22\)\\
+\(3\) & \(-3\) & \(23413\) & \(1061\) & \(11832\) & \(401\)\\
+\(3\) & \(-4\) & \(206\) & \(8.9\) & \(103\) & \(4.9\)\\
 \end{tabular}
 \end{table}
 
@@ -855,7 +853,6 @@ completing the enumeration \cite{BaburinEngel2013}, so the complete list of
 \(L\)-type domains is not known.  Our search does not attempt it: it looks
 only for the domains all of whose extreme rays are positive definite.
 The search was run with \(N_{\rm walk}=50\) and \(N_{\rm iter}=200\).
-\todo{give the number of restarts and the running time.}
 
 \begin{theorem}\label{thm:dim6}
 There exist \(21\)-dimensional \(L\)-type domains of positive definite
