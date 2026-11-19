@@ -86,8 +86,10 @@ In Section~\ref{sec:enum} we describe the enumeration of the iso-Delaunay
 domains of a space \(T\), together with a canonical interior point of a
 polyhedral cone, which is of independent interest.  In
 Section~\ref{sec:search} we describe a randomized search for a domain all of
-whose extreme rays have full rank, and in Section~\ref{sec:dim6} we report
-its outcome for \(n=6\): \(1472\) pairwise inequivalent such domains.
+whose extreme rays have full rank.  Section~\ref{sec:tests} gives test cases
+for the enumeration, over the Hermitian forms of imaginary quadratic rings, and
+in Section~\ref{sec:dim6} we report the outcome of the search for \(n=6\):
+\(1472\) pairwise inequivalent such domains.
 
 \section{Enumeration of iso-Delaunay domains}\label{sec:enum}
 
@@ -767,6 +769,76 @@ rays of rank \(1\).  For \(n=4\) there are three full-dimensional domains
 \(1\), and for \(n=2,3\) the only full-dimensional domain, Voronoi's
 principal domain, has all its extreme rays of rank \(1\).
 
+\section{Test cases: Hermitian forms over imaginary quadratic rings}
+\label{sec:tests}
+
+The enumeration of Section~\ref{sec:enum} applies to any \(T\)-space, and the
+spaces of Hermitian forms over the ring of integers of an imaginary quadratic
+field give test cases in which the arithmetic group is not \(\GL_n(\ZZ)\).
+
+\paragraph{The \(T\)-space.}
+Let \(R=\ZZ[\alpha]\) be the ring of integers of an imaginary quadratic field,
+with \(\alpha^2-s\alpha+p=0\), \(s\in\{0,1\}\); the Gaussian integers
+\(\ZZ[i]\) have \((s,p)=(0,1)\) and the Eisenstein integers \((s,p)=(1,1)\).
+We identify \(R^n\) with \(\ZZ^{2n}\) by writing \(x=a+\alpha b\) with
+\(a,b\in\ZZ^n\).  A Hermitian form \(H\) on \(R^n\) defines the real quadratic
+form \((a,b)\mapsto H(x,x)\) on \(\ZZ^{2n}\), and \(T\subset\Sym_{2n}(\RR)\)
+is the space of these forms.  It has dimension \(n^2\).  Let
+\(C\in\GL_{2n}(\ZZ)\) be the matrix of the multiplication by \(\alpha\).
+Since \(H(\alpha x,\alpha x)=p\,H(x,x)\), every \(A\in T\) satisfies
+\(C^tAC=pA\), and conversely the symmetric matrices satisfying this relation
+are exactly those of \(T\).
+
+\paragraph{The groups.}
+The group \(\GL_n(R)\) is the group of the matrices of \(\GL_{2n}(\ZZ)\) that
+commute with \(C\); it preserves \(T\).  The Galois conjugation
+\(\sigma\colon a+\alpha b\mapsto a+\bar\alpha b\) is also a matrix of
+\(\GL_{2n}(\ZZ)\) preserving \(T\), which normalizes \(\GL_n(R)\), and we also
+consider the group
+\(K_n(R)=\GL_n(R)\cup\GL_n(R)\,\sigma\).  The stabilizers and the equivalences
+of positive definite forms in \(\GL_n(R)\) are computed by the algorithm of
+Plesken and Souvignier applied to the pair of forms \(A\) and \(AC\): an
+element of \(\GL_{2n}(\ZZ)\) preserving both commutes with \(C\).  The elements
+of the coset \(\GL_n(R)\,\sigma\) do not commute with \(C\) and are reduced to
+\(\GL_n(R)\): the element \(g\sigma\) maps \(A_1\) to \(A_2\) if and only if
+\(g\) maps \(\sigma A_1\sigma^t\) to \(A_2\).  The group \(K_n(R)\) can also be
+obtained without this reduction, as the group of all the elements of
+\(\GL_{2n}(\ZZ)\) preserving \(T\), and the two computations have to agree.
+
+\paragraph{Results.}
+Table~\ref{tab:tests} gives the numbers of inequivalent full-dimensional
+iso-Delaunay domains for \(n=2\) and the first ten discriminants, which are
+checked by the test suite of \cite{DutourSikiricPolyhedralCommon}, and for
+\(n=3\) over the Gaussian and the Eisenstein integers.  For \(n=3\) over
+\(\ZZ[i]\) the enumeration takes \(9\) seconds for \(\GL_3(\ZZ[i])\) and
+\(5\) seconds for \(K_3(\ZZ[i])\), and the computation of \(K_3(\ZZ[i])\)
+as the group of all the elements preserving \(T\) gives the same \(103\)
+domains.  Over the Eisenstein integers \(\ZZ[\omega]\) it takes \(18\)
+minutes for \(\GL_3(\ZZ[\omega])\) and \(7\) minutes for
+\(K_3(\ZZ[\omega])\), on a single core.
+
+\begin{table}[ht]
+\caption{Number of inequivalent full-dimensional iso-Delaunay domains of
+Hermitian forms over the ring of integers of \(\QQ(\sqrt{d})\).}
+\label{tab:tests}
+\begin{tabular}{rrrr}
+\(n\) & \(d\) & \(\GL_n(R)\) & \(K_n(R)\)\\
+\hline
+\(2\) & \(-3\) & \(1\) & \(1\)\\
+\(2\) & \(-4\) & \(1\) & \(1\)\\
+\(2\) & \(-7\) & \(16\) & \(11\)\\
+\(2\) & \(-8\) & \(5\) & \(5\)\\
+\(2\) & \(-11\) & \(58\) & \(35\)\\
+\(2\) & \(-15\) & \(127\) & \(74\)\\
+\(2\) & \(-19\) & \(198\) & \(112\)\\
+\(2\) & \(-20\) & \(61\) & \(43\)\\
+\(2\) & \(-23\) & \(343\) & \(190\)\\
+\(2\) & \(-24\) & \(86\) & \(61\)\\
+\(3\) & \(-3\) & \(23413\) & \(11832\)\\
+\(3\) & \(-4\) & \(206\) & \(103\)\\
+\end{tabular}
+\end{table}
+
 \section{Iso-Delaunay domains in dimension 6 with full-rank rays}
 \label{sec:dim6}
 
@@ -782,8 +854,8 @@ and Engel enumerated several hundred million of these types without
 completing the enumeration \cite{BaburinEngel2013}, so the complete list of
 \(L\)-type domains is not known.  Our search does not attempt it: it looks
 only for the domains all of whose extreme rays are positive definite.
-\todo{give the parameters \(N_{\rm walk}\), \(N_{\rm iter}\), the number of
-restarts and the running time.}
+The search was run with \(N_{\rm walk}=50\) and \(N_{\rm iter}=200\).
+\todo{give the number of restarts and the running time.}
 
 \begin{theorem}\label{thm:dim6}
 There exist \(21\)-dimensional \(L\)-type domains of positive definite
@@ -865,11 +937,11 @@ Artificial Intelligence and Mathematics \cite{LeidenDeclaration2026}.
 The algorithms of Sections~\ref{sec:enum} and~\ref{sec:search} are implemented in the C++ programs of
 \cite{DutourSikiricPolyhedralCommon}, with no external library for linear
 programming or polyhedral computations: the exact simplex method and
-Clarkson's redundancy removal are implemented there.  The dual descriptions
-of Algorithm~\ref{Algo_RankDefect} are computed by one of three methods,
-chosen adaptively during the run: beneath-and-beyond, and templated C++
-reimplementations, within \cite{DutourSikiricPolyhedralCommon}, of the double
-description method and of the reverse search of lrs \cite{Avis2000}.
+Clarkson's redundancy removal are implemented there.  The dual description
+is computed in \cite{DutourSikiricPolyhedralCommon} by using the classical
+methods of reverse search, normaliz, double description, beneath-and-beyond
+and primal-dual, as well as the recursive adjacency decomposition method
+\cite{DutourSikiricBirkhoffF4H4}.
 The data of Section~\ref{sec:dim6} were processed with Python scripts calling
 the programs of \cite{DutourSikiricPolyhedralCommon}, including its
 canonical form of positive definite forms under \(\GL_n(\ZZ)\).
